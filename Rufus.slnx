@@ -1,1 +1,10 @@
-<Solution />
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Rufus.Tests/Rufus.Tests.csproj" Id="f1d89b6c-9bdc-459c-b05d-965d9ac2d775" />
+  </Folder>
+  <Project Path="src/Rufus/Rufus.csproj" />
+</Solution>
