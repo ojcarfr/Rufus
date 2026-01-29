@@ -1,8 +1,10 @@
 namespace Rufus;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
-///     Declares a type used for returning either successful or failed domain results as described in
-///     ROP approach.
+///     Declares a type used for returning either successful or failed domain results as described
+///     in ROP approach.
 ///     It defines a discriminated union with two possible cases:
 ///     <list type="bullet">
 ///         <item>
@@ -20,8 +22,8 @@ namespace Rufus;
 ///     </list>
 /// </summary>
 /// <remarks>
-///     Is not expected to replace the use of exceptions for truly exceptional situations, but return
-///     failures that are part of the normal domain logic.
+///     Is not expected to replace the use of exceptions for truly exceptional situations, but
+///     return failures that are part of the normal domain logic.
 /// </remarks>
 /// <typeparam name="T">Returned type on succeed paths.</typeparam>
 /// <typeparam name="TError">Returned type on failed paths.</typeparam>
@@ -69,13 +71,25 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
-    ///     Checks whether the result is <see cref="Error" /> and the underlying value satisfies the given
-    ///     predicate.
+    ///     Checks whether the result is <see cref="Error" /> and the underlying value satisfies
+    ///     the given predicate.
     /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Error("Some error message");
+    ///     Assert.True(result.IsErrorAnd(x =&gt; x == "Some error message"));
+    ///
+    ///     Result&lt;int, string&gt; result = Result.Error("Unexpected error");
+    ///     Assert.False(result.IsErrorAnd(x =&gt; x == "Some error message"));
+    ///
+    ///     Result&lt;int, string&gt; result = Result.Ok(50);
+    ///     Assert.False(result.IsErrorAnd(x =&gt; x == "Some error message"));
+    ///     </code>
+    /// </example>
     /// <param name="predicate">The expression used to evaluate the error value.</param>
     /// <returns>
-    ///     <c>true</c> if the result is <see cref="Error" /> and the underlying value satisfies the given
-    ///     predicate.
+    ///     <c>true</c> if the result is <see cref="Error" /> and the underlying value satisfies
+    ///     the given predicate.
     /// </returns>
     public bool IsErrorAnd(Func<TError, bool> predicate) => this switch
     {
@@ -84,9 +98,21 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
-    ///     Checks whether the result is <see cref="Ok" /> and the underlying value satisfies the given
-    ///     predicate.
+    ///     Checks whether the result is <see cref="Ok" /> and the underlying value satisfies
+    ///     the given predicate.
     /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(2);
+    ///     Assert.True(result.IsOkAnd(x =&gt; x &gt; 0));
+    ///
+    ///     Result&lt;int, string&gt; result = Result.Ok(-1);
+    ///     Assert.False(result.IsOkAnd(x =&gt; x &gt; 0));
+    ///
+    ///     result = Result.Error("Some error message");
+    ///     Assert.False(result.IsOkAnd(x =&gt; x &gt; 0));
+    ///     </code>
+    /// </example>
     /// <param name="predicate">The expression used to evaluate the success value.</param>
     /// <returns>
     ///     <c>true</c> if the result is <see cref="Ok" /> and the underlying value inside of it
@@ -99,8 +125,38 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
-    ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that contains
-    ///     the underlying success value.
+    ///     Maps a <see cref="Result{T,TError}" /> to success value <typeparamref name="TMap" /> by
+    ///     applying the given function to a contained <see cref="Ok" /> value, leaving an
+    ///     <see cref="Error" /> value untouched.
+    ///     This function can be used to compose the results of two functions.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;string, string&gt; source = Result.Ok("1,2,3,4,5");
+    ///
+    ///     Result&lt;int, string&gt; result = sut.Map(x =&gt;
+    ///         x.Split(',', StringSplitOptions.RemoveEmptyEntries)
+    ///             .Select(int.Parse)
+    ///             .Sum());
+    ///     Assert.Equal(15, Assert.IsType&lt;Result&lt;int, string&gt;.Ok&gt;(result).Value);
+    ///     </code>
+    /// </example>
+    /// <param name="map">The function used to map the success value.</param>
+    /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
+    /// <returns>
+    ///     A new result value containing the mapped value, or the same containing the underlying
+    ///     error in case of <see cref="Error" />.
+    /// </returns>
+    public Result<TMap, TError> Map<TMap>(Func<T, TMap> map) => this switch
+    {
+        Ok(var value) => new Result<TMap, TError>.Ok(map(value)),
+        Error(var error) => new Result<TMap, TError>.Error(error),
+        _ => throw new SwitchExpressionException(this),
+    };
+
+    /// <summary>
+    ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
+    ///     contains the underlying success value.
     /// </summary>
     public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) =>
         new Ok(ok.Value);

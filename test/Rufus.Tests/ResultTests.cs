@@ -169,7 +169,8 @@ public class ResultTests
     }
 
     [Fact]
-    public void GivenAnErrorResult_WhenCheckingIsErrorAndPredicateDoesNotMatch_ThenShouldReturnFalse()
+    public void
+        GivenAnErrorResult_WhenCheckingIsErrorAndPredicateDoesNotMatch_ThenShouldReturnFalse()
     {
         Result<int, string> sut = Result.Error("Expected error");
 
@@ -206,5 +207,28 @@ public class ResultTests
         bool result = sut.IsOkAnd(_ => true);
 
         Assert.False(result);
+    }
+
+    [Fact]
+    public void GivenAnOkResult_WhenMap_ThenShouldTransformValue()
+    {
+        Result<string, string> sut = Result.Ok("1,2,3,4,5");
+
+        Result<int, string> result = sut.Map(x =>
+            x.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .Sum());
+
+        Assert.Equal(15, Assert.IsType<Result<int, string>.Ok>(result).Value);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenMap_ThenShouldReturnErrorUnchanged()
+    {
+        Result<string, string> sut = Result.Error("Expected error");
+
+        Result<int, string> result = sut.Map(_ => 0);
+
+        Assert.Equal("Expected error", Assert.IsType<Result<int, string>.Error>(result).Value);
     }
 }
