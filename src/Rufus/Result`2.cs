@@ -1,7 +1,5 @@
 namespace Rufus;
 
-using System.Runtime.CompilerServices;
-
 /// <summary>
 ///     Declares a type used for returning either successful or failed domain results as described
 ///     in ROP approach.
@@ -27,12 +25,9 @@ using System.Runtime.CompilerServices;
 /// </remarks>
 /// <typeparam name="T">Returned type on succeed paths.</typeparam>
 /// <typeparam name="TError">Returned type on failed paths.</typeparam>
-public abstract record Result<T, TError> : Result
-    where TError : notnull
+public abstract record Result<T, TError> : Result where TError : notnull
 {
-    private Result()
-    {
-    }
+    private Result() { }
 
     /// <summary>
     ///     Gets a value indicating whether the result is <see cref="Error" />.
@@ -48,8 +43,8 @@ public abstract record Result<T, TError> : Result
     /// </example>
     public bool IsError => this switch
     {
-        Error => true,
-        _ => false,
+            Error => true,
+            var _ => false,
     };
 
     /// <summary>
@@ -66,8 +61,8 @@ public abstract record Result<T, TError> : Result
     /// </example>
     public bool IsOk => this switch
     {
-        Ok => true,
-        _ => false,
+            Ok => true,
+            var _ => false,
     };
 
     /// <summary>
@@ -93,8 +88,8 @@ public abstract record Result<T, TError> : Result
     /// </returns>
     public bool IsErrorAnd(Func<TError, bool> predicate) => this switch
     {
-        Error(var value) => predicate(value),
-        _ => false,
+            Error(var value) => predicate(value),
+            var _ => false,
     };
 
     /// <summary>
@@ -120,8 +115,8 @@ public abstract record Result<T, TError> : Result
     /// </returns>
     public bool IsOkAnd(Func<T, bool> predicate) => this switch
     {
-        Ok(var value) => predicate(value),
-        _ => false,
+            Ok(var value) => predicate(value),
+            var _ => false,
     };
 
     /// <summary>
@@ -149,9 +144,9 @@ public abstract record Result<T, TError> : Result
     /// </returns>
     public Result<TMap, TError> Map<TMap>(Func<T, TMap> map) => this switch
     {
-        Ok(var value) => new Result<TMap, TError>.Ok(map(value)),
-        Error(var error) => new Result<TMap, TError>.Error(error),
-        _ => throw new SwitchExpressionException(this),
+            Ok(var value) => new Result<TMap, TError>.Ok(map(value)),
+            Error(var error) => new Result<TMap, TError>.Error(error),
+            var _ => throw new System.Runtime.CompilerServices.SwitchExpressionException(this),
     };
 
     /// <summary>
@@ -159,6 +154,11 @@ public abstract record Result<T, TError> : Result
     ///     function, or returns the provided <paramref name="default" /> value in case of
     ///     <see cref="Error" />.
     /// </summary>
+    /// <remarks>
+    ///     Arguments passed to <see cref="MapOr" /> are eagerly evaluated; if you are passing the result
+    ///     of a function call, it is recommended to use <see cref="MapOrElse" />, which is lazily
+    ///     evaluated.
+    /// </remarks>
     /// <example>
     ///     <code>
     ///     Result&lt;string, string&gt; result = Result.Ok("foo");
@@ -178,24 +178,39 @@ public abstract record Result<T, TError> : Result
     /// </returns>
     public Result<TMap, TError> MapOr<TMap>(Func<T, TMap> map, TMap @default) => this switch
     {
-        Ok(var value) => new Result<TMap, TError>.Ok(map(value)),
-        Error => new Result<TMap, TError>.Ok(@default),
-        _ => throw new SwitchExpressionException(this),
+            Ok(var value) => new Result<TMap, TError>.Ok(Value: map(value)),
+            Error => new Result<TMap, TError>.Ok(@default),
+            var _ => throw new System.Runtime.CompilerServices.SwitchExpressionException(this),
+    };
+
+    /// <summary>
+    ///     Maps a <see cref="Result{T,TError}" /> to <typeparamref name="TMap" /> by applying fallback function
+    ///     <paramref name="default" /> to a contained <see cref="Error" /> value, of function <paramref name="map" /> to a
+    ///     contained <see cref="Ok" /> value.
+    ///     This function can be used to unpack a successful result while handling an error.
+    /// </summary>
+    /// <param name="map">The function used to map a success value.</param>
+    /// <param name="default">The function used to return a fallback value in case of error.</param>
+    /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
+    /// <returns>A new result value containing the mapped success value, or the fallback value in case of error.</returns>
+    public Result<TMap, TError> MapOrElse<TMap>(Func<T, TMap> map, Func<TError, TMap> @default) => this switch
+    {
+            Ok(var value) => new Result<TMap, TError>.Ok(map(value)),
+            Error(var error) => new Result<TMap, TError>.Ok(@default(error)),
+            var _ => throw new System.Runtime.CompilerServices.SwitchExpressionException(this),
     };
 
     /// <summary>
     ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
     ///     contains the underlying success value.
     /// </summary>
-    public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) =>
-        new Ok(ok.Value);
+    public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
 
     /// <summary>
     /// </summary>
     /// <param name="error"></param>
     /// <returns></returns>
-    public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) =>
-        new Error(error.Value);
+    public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) => new Error(error.Value);
 
     /// <summary>
     ///     Represents the successful result of an operation, containing a value of the specified type.
