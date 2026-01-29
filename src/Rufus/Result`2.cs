@@ -61,6 +61,7 @@ public abstract record Result<T, TError> : Result where TError : notnull
     public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
 
     #pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+
     /// <summary>
     ///     Gets a value indicating whether the result is <see cref="Error" />.
     /// </summary>
@@ -193,7 +194,7 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// <example>
     ///     <code>
     ///     Result&lt;string, string&gt; result = Result.Ok("foo");
-    ///     Assert.Equal(3, Assert.IsType&lt;Result&lt;int, string&gt;.Ok&gt;(result).Value);
+    ///     Assert.Equal(3, result.MapOr(x =&gt; x.Length, 42));
     ///
     ///     result = Result.Error("bar");
     ///     Assert.Equal(42, Assert.IsType&lt;Result&lt;int, string&gt;.Ok&gt;(result).Value);
@@ -202,31 +203,27 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// <param name="map">The function used to map the success value.</param>
     /// <param name="default">The default value returned in case of <see cref="Error" />.</param>
     /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
-    /// <returns>
-    ///     A new result value containing either the mapped success value or the
-    ///     <paramref name="default" /> one in case of error.
-    ///     This method always results into an <see cref="Ok" /> result.
-    /// </returns>
-    public Result<TMap, TError> MapOr<TMap>(Func<T, TMap> map, TMap @default) => this switch
+    public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) => this switch
     {
-        Ok ok => new Result<TMap, TError>.Ok(Value: map(ok.Value)),
-        Error => new Result<TMap, TError>.Ok(@default),
+        Ok ok => map(ok.Value),
+        Error => @default,
     };
 
     /// <summary>
     ///     Maps a <see cref="Result{T,TError}" /> to <typeparamref name="TMap" /> by applying fallback function
-    ///     <paramref name="default" /> to a contained <see cref="Error" /> value, of function <paramref name="map" /> to a
+    ///     <paramref name="fallback" /> to a contained <see cref="Error" /> value, of function <paramref name="map" /> to a
     ///     contained <see cref="Ok" /> value.
     ///     This function can be used to unpack a successful result while handling an error.
     /// </summary>
     /// <param name="map">The function used to map a success value.</param>
-    /// <param name="default">The function used to return a fallback value in case of error.</param>
+    /// <param name="fallback">The function used to return a fallback value in case of error.</param>
     /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
     /// <returns>A new result value containing the mapped success value, or the fallback value in case of error.</returns>
-    public Result<TMap, TError> MapOrElse<TMap>(Func<T, TMap> map, Func<TError, TMap> @default) => this switch
+    public TMap MapOrElse<TMap>(Func<T, TMap> map, Func<TError, TMap> fallback) => this switch
     {
-        Ok ok => new Result<TMap, TError>.Ok(map(ok.Value)),
-        Error error => new Result<TMap, TError>.Ok(@default(error.Value)),
+        Ok ok => map(ok.Value),
+        Error error => fallback(error.Value),
     };
+
     #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 }

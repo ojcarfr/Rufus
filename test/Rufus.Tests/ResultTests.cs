@@ -37,10 +37,10 @@ public class ResultTests
     {
         Result sut = Result.Ok("OK");
 
-        var result = sut switch
+        object? result = sut switch
         {
-                Result.Ok<object>(var value) => value,
-                var _ => "FAIL",
+            Result.Ok<object>(var value) => value,
+            _ => default,
         };
 
         Assert.Equal("OK", result);
@@ -51,10 +51,10 @@ public class ResultTests
     {
         Result sut = Result.Error("Expected error");
 
-        var result = sut switch
+        object? result = sut switch
         {
-                Result.Error<object>(var value) => value,
-                var _ => default,
+            Result.Error<object>(var value) => value,
+            _ => default,
         };
 
         Assert.Equal("Expected error", result);
@@ -65,10 +65,10 @@ public class ResultTests
     {
         Result<int, string> sut = Result.Ok(42);
 
-        var result = sut switch
+        int result = sut switch
         {
-                Result.Ok<int>(var value) => value,
-                var _ => default,
+            Result.Ok<int>(var value) => value,
+            _ => default,
         };
 
         Assert.Equal(42, result);
@@ -79,10 +79,10 @@ public class ResultTests
     {
         Result<int, string> sut = Result.Error("Expected error");
 
-        var result = sut switch
+        string? result = sut switch
         {
-                Result.Error<string>(var value) => value,
-                var _ => default,
+            Result.Error<string>(var value) => value,
+            _ => default,
         };
 
         Assert.Equal("Expected error", result);
@@ -93,11 +93,11 @@ public class ResultTests
     {
         Result<object, string> sut = Result.Ok<object>("ok");
 
-        var result = sut switch
+        bool result = sut switch
         {
-                Result.Ok<object>(List<string> _) => false,
-                Result.Ok<object>(string _) => true,
-                var _ => false,
+            Result.Ok<object>(List<string> _) => false,
+            Result.Ok<object>(string _) => true,
+            _ => false,
         };
 
         Assert.True(result);
@@ -108,11 +108,11 @@ public class ResultTests
     {
         Result<int, object> sut = Result.Error<object>("Expected error");
 
-        var result = sut switch
+        bool result = sut switch
         {
-                Result.Error<object>(Exception _) => false,
-                Result.Error<object>(string _) => true,
-                var _ => false,
+            Result.Error<object>(Exception _) => false,
+            Result.Error<object>(string _) => true,
+            _ => false,
         };
 
         Assert.True(result);
@@ -155,7 +155,7 @@ public class ResultTests
     {
         Result<int, string> sut = Result.Ok(50);
 
-        var result = sut.IsErrorAnd(_ => true);
+        bool result = sut.IsErrorAnd(_ => true);
 
         Assert.False(result);
     }
@@ -165,7 +165,7 @@ public class ResultTests
     {
         Result<int, string> sut = Result.Error("Expected error");
 
-        var result = sut.IsErrorAnd(_ => true);
+        bool result = sut.IsErrorAnd(_ => true);
 
         Assert.True(result);
     }
@@ -175,7 +175,7 @@ public class ResultTests
     {
         Result<int, string> sut = Result.Error("Expected error");
 
-        var result = sut.IsErrorAnd(_ => false);
+        bool result = sut.IsErrorAnd(_ => false);
 
         Assert.False(result);
     }
@@ -185,7 +185,7 @@ public class ResultTests
     {
         Result<int, string> sut = Result.Ok(50);
 
-        var result = sut.IsOkAnd(value => value > 0);
+        bool result = sut.IsOkAnd(value => value > 0);
 
         Assert.True(result);
     }
@@ -195,7 +195,7 @@ public class ResultTests
     {
         Result<int, string> sut = Result.Ok(-10);
 
-        var result = sut.IsOkAnd(value => value > 0);
+        bool result = sut.IsOkAnd(value => value > 0);
 
         Assert.False(result);
     }
@@ -205,7 +205,7 @@ public class ResultTests
     {
         Result<int, string> sut = Result.Error("Expected error");
 
-        var result = sut.IsOkAnd(_ => true);
+        bool result = sut.IsOkAnd(_ => true);
 
         Assert.False(result);
     }
@@ -215,7 +215,8 @@ public class ResultTests
     {
         Result<string, string> sut = Result.Ok("1,2,3,4,5");
 
-        var result = sut.Map(x => x.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).Sum());
+        Result<int, string> result =
+            sut.Map(x => x.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).Sum());
 
         Assert.Equal(15, Assert.IsType<Result<int, string>.Ok>(result).Value);
     }
@@ -225,7 +226,7 @@ public class ResultTests
     {
         Result<string, string> sut = Result.Error("Expected error");
 
-        var result = sut.Map(_ => 0);
+        Result<int, string> result = sut.Map(_ => 0);
 
         Assert.Equal("Expected error", Assert.IsType<Result<int, string>.Error>(result).Value);
     }
@@ -235,9 +236,9 @@ public class ResultTests
     {
         Result<string, string> sut = Result.Ok("foo");
 
-        var result = sut.MapOr(x => x.Length, 42);
+        int result = sut.MapOr(x => x.Length, 42);
 
-        Assert.Equal(3, Assert.IsType<Result<int, string>.Ok>(result).Value);
+        Assert.Equal(3, result);
     }
 
     [Fact]
@@ -245,9 +246,9 @@ public class ResultTests
     {
         Result<string, string> sut = Result.Error("bar");
 
-        var result = sut.MapOr(x => x.Length, 42);
+        int result = sut.MapOr(x => x.Length, 42);
 
-        Assert.Equal(42, Assert.IsType<Result<int, string>.Ok>(result).Value);
+        Assert.Equal(42, result);
     }
 
     [Fact]
@@ -255,9 +256,9 @@ public class ResultTests
     {
         Result<string, string> sut = Result.Ok("foo");
 
-        var result = sut.MapOrElse(x => x.Length, _ => 42);
+        int result = sut.MapOrElse(x => x.Length, fallback: _ => 42);
 
-        Assert.Equal(3, Assert.IsType<Result<int, string>.Ok>(result).Value);
+        Assert.Equal(3, result);
     }
 
     [Fact]
@@ -265,8 +266,8 @@ public class ResultTests
     {
         Result<string, string> sut = Result.Error("bar");
 
-        var result = sut.MapOrElse(x => x.Length, _ => 42);
+        int result = sut.MapOrElse(x => x.Length, _ => 42);
 
-        Assert.Equal(42, Assert.IsType<Result<int, string>.Ok>(result).Value);
+        Assert.Equal(42, result);
     }
 }
