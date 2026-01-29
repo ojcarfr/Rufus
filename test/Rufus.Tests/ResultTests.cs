@@ -231,4 +231,24 @@ public class ResultTests
 
         Assert.Equal("Expected error", Assert.IsType<Result<int, string>.Error>(result).Value);
     }
+
+    [Fact]
+    public void GivenAnOkResult_WhenMapOr_ThenShouldMapValue()
+    {
+        Result<string, string> sut = Result.Ok("foo");
+
+        Result<int, string> result = sut.MapOr(x => x.Length, 42);
+
+        Assert.Equal(3, Assert.IsType<Result<int, string>.Ok>(result).Value);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenMapOr_ThenShouldReturnDefaultValue()
+    {
+        Result<string, string> sut = Result.Error("bar");
+
+        Result<int, string> result = sut.MapOr(x => x.Length, 42);
+
+        Assert.Equal(42, Assert.IsType<Result<int, string>.Ok>(result).Value);
+    }
 }

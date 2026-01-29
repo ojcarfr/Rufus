@@ -155,6 +155,35 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
+    ///     Maps the underlying success value in case of <see cref="Ok" /> by applying the given map
+    ///     function, or returns the provided <paramref name="default" /> value in case of
+    ///     <see cref="Error" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;string, string&gt; result = Result.Ok("foo");
+    ///     Assert.Equal(3, Assert.IsType&lt;Result&lt;int, string&gt;.Ok&gt;(result).Value);
+    ///
+    ///     result = Result.Error("bar");
+    ///     Assert.Equal(42, Assert.IsType&lt;Result&lt;int, string&gt;.Ok&gt;(result).Value);
+    ///     </code>
+    /// </example>
+    /// <param name="map">The function used to map the success value.</param>
+    /// <param name="default">The default value returned in case of <see cref="Error" />.</param>
+    /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
+    /// <returns>
+    ///     A new result value containing either the mapped success value or the
+    ///     <paramref name="default" /> one in case of error.
+    ///     This method always results into an <see cref="Ok" /> result.
+    /// </returns>
+    public Result<TMap, TError> MapOr<TMap>(Func<T, TMap> map, TMap @default) => this switch
+    {
+        Ok(var value) => new Result<TMap, TError>.Ok(map(value)),
+        Error => new Result<TMap, TError>.Ok(@default),
+        _ => throw new SwitchExpressionException(this),
+    };
+
+    /// <summary>
     ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
     ///     contains the underlying success value.
     /// </summary>
