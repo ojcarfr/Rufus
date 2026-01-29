@@ -30,6 +30,38 @@ public abstract record Result<T, TError> : Result where TError : notnull
     private Result() { }
 
     /// <summary>
+    ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
+    ///     contains the underlying success value.
+    /// </summary>
+    public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
+
+    /// <summary>
+    /// </summary>
+    /// <param name="error"></param>
+    /// <returns></returns>
+    public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) => new Error(error.Value);
+
+    /// <summary>
+    ///     Represents the successful result of an operation, containing a value of the specified type.
+    /// </summary>
+    /// <param name="Value">The underlying successful value.</param>
+    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>;
+
+    /// <summary>
+    ///     Represents a failed result containing error information of the specified type.
+    /// </summary>
+    /// <remarks>
+    ///     Use this type to indicate an operation that did not succeed and to provide details
+    ///     about the failure. The generic parameter specifies the type of error information returned.
+    /// </remarks>
+    /// <param name="Value">
+    ///     The underlying failure value.
+    ///     Cannot be null if the error type is a reference type.
+    /// </param>
+    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
+
+    #pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+    /// <summary>
     ///     Gets a value indicating whether the result is <see cref="Error" />.
     /// </summary>
     /// <example>
@@ -43,8 +75,8 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// </example>
     public bool IsError => this switch
     {
-            Error => true,
-            var _ => false,
+        Error => true,
+        _ => false,
     };
 
     /// <summary>
@@ -61,8 +93,8 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// </example>
     public bool IsOk => this switch
     {
-            Ok => true,
-            var _ => false,
+        Ok => true,
+        _ => false,
     };
 
     /// <summary>
@@ -88,8 +120,8 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// </returns>
     public bool IsErrorAnd(Func<TError, bool> predicate) => this switch
     {
-            Error(var value) => predicate(value),
-            var _ => false,
+        Error error => predicate(error.Value),
+        _ => false,
     };
 
     /// <summary>
@@ -115,8 +147,8 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// </returns>
     public bool IsOkAnd(Func<T, bool> predicate) => this switch
     {
-            Ok(var value) => predicate(value),
-            var _ => false,
+        Ok ok => predicate(ok.Value),
+        _ => false,
     };
 
     /// <summary>
@@ -144,9 +176,8 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// </returns>
     public Result<TMap, TError> Map<TMap>(Func<T, TMap> map) => this switch
     {
-            Ok(var value) => new Result<TMap, TError>.Ok(map(value)),
-            Error(var error) => new Result<TMap, TError>.Error(error),
-            var _ => throw new System.Runtime.CompilerServices.SwitchExpressionException(this),
+        Ok ok => new Result<TMap, TError>.Ok(map(ok.Value)),
+        Error error => new Result<TMap, TError>.Error(error.Value),
     };
 
     /// <summary>
@@ -178,9 +209,8 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// </returns>
     public Result<TMap, TError> MapOr<TMap>(Func<T, TMap> map, TMap @default) => this switch
     {
-            Ok(var value) => new Result<TMap, TError>.Ok(Value: map(value)),
-            Error => new Result<TMap, TError>.Ok(@default),
-            var _ => throw new System.Runtime.CompilerServices.SwitchExpressionException(this),
+        Ok ok => new Result<TMap, TError>.Ok(Value: map(ok.Value)),
+        Error => new Result<TMap, TError>.Ok(@default),
     };
 
     /// <summary>
@@ -195,39 +225,8 @@ public abstract record Result<T, TError> : Result where TError : notnull
     /// <returns>A new result value containing the mapped success value, or the fallback value in case of error.</returns>
     public Result<TMap, TError> MapOrElse<TMap>(Func<T, TMap> map, Func<TError, TMap> @default) => this switch
     {
-            Ok(var value) => new Result<TMap, TError>.Ok(map(value)),
-            Error(var error) => new Result<TMap, TError>.Ok(@default(error)),
-            var _ => throw new System.Runtime.CompilerServices.SwitchExpressionException(this),
+        Ok ok => new Result<TMap, TError>.Ok(map(ok.Value)),
+        Error error => new Result<TMap, TError>.Ok(@default(error.Value)),
     };
-
-    /// <summary>
-    ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
-    ///     contains the underlying success value.
-    /// </summary>
-    public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
-
-    /// <summary>
-    /// </summary>
-    /// <param name="error"></param>
-    /// <returns></returns>
-    public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) => new Error(error.Value);
-
-    /// <summary>
-    ///     Represents the successful result of an operation, containing a value of the specified type.
-    /// </summary>
-    /// <param name="Value">The underlying successful value.</param>
-    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>;
-
-    /// <summary>
-    ///     Represents a failed result containing error information of the specified type.
-    /// </summary>
-    /// <remarks>
-    ///     Use this type to indicate an operation that did not succeed and to provide details
-    ///     about the failure. The generic parameter specifies the type of error information returned.
-    /// </remarks>
-    /// <param name="Value">
-    ///     The underlying failure value.
-    ///     Cannot be null if the error type is a reference type.
-    /// </param>
-    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
+    #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 }

@@ -73,4 +73,12 @@ bool isSuccess = result.Switch(
 assert.True(isSuccess);
 ```
 
-Even you might take advantage of aliasing you result types.
+Even you might take advantage of aliasing you result types to avoid generic specification
+on every switch expression.
+
+According to benchmarks, the cost of matching to ```Result``` interface is almost inexistent:
+
+| Method                           |     Mean |     Error |    StdDev | Ratio | RatioSD |   Gen0 | Allocated | Alloc Ratio |
+|----------------------------------|---------:|----------:|----------:|------:|--------:|-------:|----------:|------------:|
+| 'Switch by generic Result type'  | 1.880 ns | 0.0619 ns | 0.1422 ns |  1.01 |    0.11 | 0.0029 |      24 B |        1.00 |
+| 'Switch by interface case types' | 1.986 ns | 0.0648 ns | 0.1849 ns |  1.06 |    0.13 | 0.0029 |      24 B |        1.00 |
