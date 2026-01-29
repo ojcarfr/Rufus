@@ -149,6 +149,36 @@ public class ResultTests
     }
 
     [Fact]
+    public void GivenAnOkResult_WhenCheckingIsErrorAndPredicateMatches_ThenShouldReturnFalse()
+    {
+        Result<int, string> sut = Result.Ok(50);
+
+        bool result = sut.IsErrorAnd(error => true);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenCheckingIsErrorAndPredicateMatches_ThenShouldReturnTrue()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+
+        bool result = sut.IsErrorAnd(_ => true);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenCheckingIsErrorAndPredicateDoesNotMatch_ThenShouldReturnFalse()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+
+        bool result = sut.IsErrorAnd(_ => false);
+
+        Assert.False(result);
+    }
+
+    [Fact]
     public void GivenAnOkResult_WhenCheckingIsOkAndPredicateMatches_ThenShouldReturnTrue()
     {
         Result<int, string> sut = Result.Ok(50);
@@ -169,7 +199,7 @@ public class ResultTests
     }
 
     [Fact]
-    public void GivenAnErrorResult_WhenCheckingIsOkAnd_ThenShouldReturnFalse()
+    public void GivenAnErrorResult_WhenCheckingIsOkAndPredicateMatches_ThenShouldReturnFalse()
     {
         Result<int, string> sut = Result.Error("Expected error");
 

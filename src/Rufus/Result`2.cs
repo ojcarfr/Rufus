@@ -33,24 +33,6 @@ public abstract record Result<T, TError> : Result
     }
 
     /// <summary>
-    ///     Gets a value indicating whether the result is <see cref="Ok" />.
-    /// </summary>
-    /// <example>
-    ///     <code>
-    ///     Result&lt;int, string&gt; result = Result.Ok(-3);
-    ///     Assert.True(result.IsOk);
-    ///
-    ///     result = Result.Error("Some error message");
-    ///     Assert.False(result.IsOk);
-    ///     </code>
-    /// </example>
-    public bool IsOk => this switch
-    {
-        Ok => true,
-        _ => false,
-    };
-
-    /// <summary>
     ///     Gets a value indicating whether the result is <see cref="Error" />.
     /// </summary>
     /// <example>
@@ -69,10 +51,43 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
+    ///     Gets a value indicating whether the result is <see cref="Ok" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(-3);
+    ///     Assert.True(result.IsOk);
+    ///
+    ///     result = Result.Error("Some error message");
+    ///     Assert.False(result.IsOk);
+    ///     </code>
+    /// </example>
+    public bool IsOk => this switch
+    {
+        Ok => true,
+        _ => false,
+    };
+
+    /// <summary>
+    ///     Checks whether the result is <see cref="Error" /> and the underlying value satisfies the given
+    ///     predicate.
+    /// </summary>
+    /// <param name="predicate">The expression used to evaluate the error value.</param>
+    /// <returns>
+    ///     <c>true</c> if the result is <see cref="Error" /> and the underlying value satisfies the given
+    ///     predicate.
+    /// </returns>
+    public bool IsErrorAnd(Func<TError, bool> predicate) => this switch
+    {
+        Error(var value) => predicate(value),
+        _ => false,
+    };
+
+    /// <summary>
     ///     Checks whether the result is <see cref="Ok" /> and the underlying value satisfies the given
     ///     predicate.
     /// </summary>
-    /// <param name="predicate">The expression used to evaluate success value.</param>
+    /// <param name="predicate">The expression used to evaluate the success value.</param>
     /// <returns>
     ///     <c>true</c> if the result is <see cref="Ok" /> and the underlying value inside of it
     ///     matches a predicate.
