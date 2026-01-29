@@ -33,6 +33,24 @@ public abstract record Result<T, TError> : Result
     }
 
     /// <summary>
+    ///     Gets a value indicating whether the result is <see cref="Ok" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(-3);
+    ///     Assert.True(result.IsOk);
+    ///
+    ///     result = Result.Error("Some error message");
+    ///     Assert.False(result.IsOk);
+    ///     </code>
+    /// </example>
+    public bool IsOk => this switch
+    {
+        Ok => true,
+        _ => false
+    };
+
+    /// <summary>
     ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that contains
     ///     the underlying success value.
     /// </summary>

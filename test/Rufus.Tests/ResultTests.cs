@@ -115,4 +115,20 @@ public class ResultTests
 
         Assert.True(result);
     }
+
+    [Fact]
+    public void GivenAnOkResult_WhenCheckingIsOk_ThenShouldReturnTrue()
+    {
+        Result<int, string> sut = Result.Ok(100);
+
+        Assert.True(sut.IsOk);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenCheckingIsOk_ThenShouldReturnFalse()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+
+        Assert.False(sut.IsOk);
+    }
 }
