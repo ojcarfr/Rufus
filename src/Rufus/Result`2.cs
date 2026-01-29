@@ -51,6 +51,21 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
+    ///     Checks whether the result is <see cref="Ok" /> and the underlying value satisfies the given
+    ///     predicate.
+    /// </summary>
+    /// <param name="predicate">The expression used to evaluate success value.</param>
+    /// <returns>
+    ///     <c>true</c> if the result is <see cref="Ok" /> and the underlying value inside of it
+    ///     matches a predicate.
+    /// </returns>
+    public bool IsOkAnd(Func<T, bool> predicate) => this switch
+    {
+        Ok(var value) => predicate(value),
+        _ => false
+    };
+
+    /// <summary>
     ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that contains
     ///     the underlying success value.
     /// </summary>

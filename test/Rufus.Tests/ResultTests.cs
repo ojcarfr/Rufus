@@ -131,4 +131,34 @@ public class ResultTests
 
         Assert.False(sut.IsOk);
     }
+
+    [Fact]
+    public void GivenAnOkResult_WhenCheckingIsOkAndPredicateMatches_ThenShouldReturnTrue()
+    {
+        Result<int, string> sut = Result.Ok(50);
+
+        bool result = sut.IsOkAnd(value => value > 0);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void GivenAnOkResult_WhenCheckingIsOkAndPredicateDoesNotMatch_ThenShouldReturnFalse()
+    {
+        Result<int, string> sut = Result.Ok(-10);
+
+        bool result = sut.IsOkAnd(value => value > 0);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenCheckingIsOkAnd_ThenShouldReturnFalse()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+
+        bool result = sut.IsOkAnd(_ => true);
+
+        Assert.False(result);
+    }
 }
