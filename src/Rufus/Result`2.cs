@@ -47,7 +47,25 @@ public abstract record Result<T, TError> : Result
     public bool IsOk => this switch
     {
         Ok => true,
-        _ => false
+        _ => false,
+    };
+
+    /// <summary>
+    ///     Gets a value indicating whether the result is <see cref="Error" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(-3);
+    ///     Assert.False(result.IsError);
+    ///
+    ///     result = Result.Error("Some error message");
+    ///     Assert.True(result.IsError);
+    ///     </code>
+    /// </example>
+    public bool IsError => this switch
+    {
+        Error => true,
+        _ => false,
     };
 
     /// <summary>
@@ -62,7 +80,7 @@ public abstract record Result<T, TError> : Result
     public bool IsOkAnd(Func<T, bool> predicate) => this switch
     {
         Ok(var value) => predicate(value),
-        _ => false
+        _ => false,
     };
 
     /// <summary>

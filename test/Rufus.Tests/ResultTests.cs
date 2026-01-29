@@ -38,7 +38,7 @@ public class ResultTests
         object result = sut switch
         {
             Result.Ok<object>(var value) => value,
-            _ => "FAIL"
+            _ => "FAIL",
         };
 
         Assert.Equal("OK", result);
@@ -52,7 +52,7 @@ public class ResultTests
         object? result = sut switch
         {
             Result.Error<object>(var value) => value,
-            _ => default
+            _ => default,
         };
 
         Assert.Equal("Expected error", result);
@@ -66,7 +66,7 @@ public class ResultTests
         int result = sut switch
         {
             Result.Ok<int>(var value) => value,
-            _ => default
+            _ => default,
         };
 
         Assert.Equal(42, result);
@@ -80,7 +80,7 @@ public class ResultTests
         string? result = sut switch
         {
             Result.Error<string>(var value) => value,
-            _ => default
+            _ => default,
         };
 
         Assert.Equal("Expected error", result);
@@ -95,7 +95,7 @@ public class ResultTests
         {
             Result.Ok<object>(List<string> _) => false,
             Result.Ok<object>(string _) => true,
-            _ => false
+            _ => false,
         };
 
         Assert.True(result);
@@ -110,7 +110,7 @@ public class ResultTests
         {
             Result.Error<object>(Exception _) => false,
             Result.Error<object>(string _) => true,
-            _ => false
+            _ => false,
         };
 
         Assert.True(result);
@@ -130,6 +130,22 @@ public class ResultTests
         Result<int, string> sut = Result.Error("Expected error");
 
         Assert.False(sut.IsOk);
+    }
+
+    [Fact]
+    public void GivenAnOkResult_WhenCheckingIsError_ThenShouldReturnFalse()
+    {
+        Result<int, string> sut = Result.Ok(100);
+
+        Assert.False(sut.IsError);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenCheckingIsError_ThenShouldReturnTrue()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+
+        Assert.True(sut.IsError);
     }
 
     [Fact]
