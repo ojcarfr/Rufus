@@ -270,4 +270,24 @@ public class ResultTests
 
         Assert.Equal(42, result);
     }
+
+    [Fact]
+    public void GivenAnOkResult_WhenMapError_ThenShouldReturnOkUnchanged()
+    {
+        Result<int, int> sut = Result.Ok(2);
+
+        Result<int, string> result = sut.MapError(static err => $"error code: {err}");
+
+        Assert.Equal(Result.Ok(2), result);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenMapError_ThenShouldTransformErrorValue()
+    {
+        Result<int, int> sut = Result.Error(13);
+
+        Result<int, string> result = sut.MapError(static err => $"error code: {err}");
+
+        Assert.Equal(Result.Error("error code: 13"), result);
+    }
 }

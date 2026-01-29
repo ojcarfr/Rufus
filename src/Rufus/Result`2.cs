@@ -225,5 +225,30 @@ public abstract record Result<T, TError> : Result where TError : notnull
         Error error => fallback(error.Value),
     };
 
+    /// <summary>
+    ///     Maps an underlying error value to <typeparamref name="TMap" /> by applying the given function to a contained
+    ///     <see cref="Error" /> value, leaving an <see cref="Ok" /> value untouched.
+    ///     This function can be used to pass through a successful result while handling an error.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Function&lt;int, string&gt; stringify = static x =&gt; $"error code: {x}";
+    ///
+    ///     Result&lt;int, string&gt; result = Result.Ok(2);
+    ///     Assert.Equal(Result.Ok(2), result.MapError(stringify));
+    ///
+    ///     result = Result.Error(13);
+    ///     Assert.Equal(Result.Error("error code: 13"), result);
+    ///     </code>
+    /// </example>
+    /// <param name="map">The function used to map the error.</param>
+    /// <typeparam name="TMap">Type of the returning error.</typeparam>
+    public Result<T, TMap> MapError<TMap>(Func<TError, TMap> map)
+        where TMap : notnull => this switch
+    {
+        Ok ok => new Result<T, TMap>.Ok(ok.Value),
+        Error error => new Result<T, TMap>.Error(map(error.Value)),
+    };
+
     #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 }
