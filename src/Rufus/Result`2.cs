@@ -1,31 +1,20 @@
 namespace Rufus;
 
 /// <summary>
-///     Declares a type used for returning either successful or failed domain results as described
-///     in ROP approach.
-///     It defines a discriminated union with two possible cases:
-///     <list type="bullet">
-///         <item>
-///             <term>
-///                 <see cref="Ok" />
-///             </term>
-///             <description>Represents success result containing a returned value.</description>
-///         </item>
-///         <item>
-///             <term>
-///                 <see cref="Error" />
-///             </term>
-///             <description>Represents failure result containing an error value.</description>
-///         </item>
-///     </list>
+///     <see cref="Result{T,TError}" /> is the type used for returning and propagating errors. It is a discriminated union
+///     with the variants <see cref="Ok" />, representing success and containing a value, and <see cref="Error" />,
+///     representing failure and containing an error value.
 /// </summary>
 /// <remarks>
+///     Functions return <see cref="Result{T,TError}" /> whenever errors are expected and recoverable like explained in
+///     ROP.
 ///     Is not expected to replace the use of exceptions for truly exceptional situations, but
 ///     return failures that are part of the normal domain logic.
 /// </remarks>
 /// <typeparam name="T">Returned type on succeed paths.</typeparam>
 /// <typeparam name="TError">Returned type on failed paths.</typeparam>
-public abstract record Result<T, TError> : Result where TError : notnull
+public abstract record Result<T, TError> : Result
+    where TError : notnull
 {
     private Result() { }
 

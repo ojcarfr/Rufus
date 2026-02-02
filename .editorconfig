@@ -94,7 +94,7 @@ csharp_style_throw_expression = true:error
 csharp_style_conditional_delegate_call = true:error
 
 #use code block preferences
-csharp_prefer_braces = false:warning
+csharp_prefer_braces = true:warning
 
 ###############################
 # .NET formatting settings    #
@@ -143,7 +143,7 @@ csharp_spaces_in_declaration_statements = true
 
 ######## Before Section #######################
 
-# use space before colon and comma and semicomma
+# use space before colon and comma and semicolon
 csharp_space_before_colon_in_inheritance_clause = true
 csharp_space_before_colon_for_base_or_interface_in_type_declaration = true
 csharp_space_before_comma = false
@@ -200,9 +200,9 @@ dotnet_naming_symbols.private_readonly_fields.required_modifiers = readonly
 dotnet_naming_symbols.public_internal_fields.applicable_accessibilities = public, internal
 dotnet_naming_symbols.public_internal_fields.applicable_kinds = field
 
-# private_protected_fields - Define private and protected fields
-dotnet_naming_symbols.private_protected_fields.applicable_accessibilities = private, protected, local
-dotnet_naming_symbols.private_protected_fields.applicable_kinds = field, local
+# private_fields - Define private and protected fields
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.applicable_kinds = field
 
 # local_members - Define private and protected fields
 dotnet_naming_symbols.local_members.applicable_accessibilities = local
@@ -254,8 +254,8 @@ dotnet_naming_style.first_upper_style.capitalization = first_word_upper
 dotnet_naming_style.camel_case_style.capitalization = camel_case
 
 # prefix_private_protected_fields_with_underscore - Private protected fields and local members must be camel_case and the first character must be an '_'
-dotnet_naming_style.prefix_private_protected_fields_with_underscore.capitalization = camel_case
-dotnet_naming_style.prefix_private_protected_fields_with_underscore.required_prefix = _
+dotnet_naming_style.prefix_private_fields_with_underscore.capitalization = camel_case
+dotnet_naming_style.prefix_private_fields_with_underscore.required_prefix = _
 
 # prefix_private_fields_and_local_members_with_underscore - Private fields and local members must be camel_case and the first character must be an '_'
 dotnet_naming_style.prefix_private_fields_and_local_members_with_underscore.capitalization = camel_case
@@ -295,10 +295,10 @@ dotnet_naming_rule.local_members_must_be_camel_case.severity = warning
 dotnet_naming_rule.local_members_must_be_camel_case.symbols = local_members
 dotnet_naming_rule.local_members_must_be_camel_case.style = camel_case_style
 
-# Private and protected fields must be camelCase
+# Private fields must be camelCase
 dotnet_naming_rule.private_protected_fields_must_be_camel_case.severity = warning
-dotnet_naming_rule.private_protected_fields_must_be_camel_case.symbols = private_protected_fields
-dotnet_naming_rule.private_protected_fields_must_be_camel_case.style = prefix_private_protected_fields_with_underscore
+dotnet_naming_rule.private_protected_fields_must_be_camel_case.symbols = private_fields
+dotnet_naming_rule.private_protected_fields_must_be_camel_case.style = prefix_private_fields_with_underscore
 
 # Public members must be capitalized
 dotnet_naming_rule.public_members_must_be_capitalized.severity = warning
@@ -423,8 +423,8 @@ csharp_prefer_separate_deconstructed_variables_declaration = true
 csharp_prefer_explicit_discard_declaration = false
 
 # use instance members qualification
-csharp_instance_members_qualify_members = all
-csharp_instance_members_qualify_declared_in = this_class
+csharp_instance_members_qualify_members = field
+csharp_instance_members_qualify_declared_in = base_class
 
 # use static Members Qualification
 csharp_static_members_qualify_with = declared_type
@@ -567,7 +567,7 @@ csharp_space_before_ternary_quest = true
 ######## Between Section #######################
 
 # use space between accessors and attributes
-csharp_space_between_accessors_in_singleline_property = false
+csharp_space_between_accessors_in_singleline_property = true
 csharp_space_between_attribute_sections = false
 
 # use space between keywords
@@ -721,7 +721,7 @@ csharp_place_expr_accessor_on_single_line = if_owner_is_single_line
 csharp_wrap_before_arrow_with_expressions = true
 
 # Arrangement of Type Parameters, Constraints and Base Types
-csharp_place_type_constraints_on_same_line = true
+csharp_place_type_constraints_on_same_line = false
 csharp_wrap_before_first_type_parameter_constraint = false
 csharp_wrap_multiple_type_parameter_constraints_style = chop_always
 csharp_wrap_before_type_parameter_langle = false
