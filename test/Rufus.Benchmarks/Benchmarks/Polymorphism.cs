@@ -22,53 +22,65 @@ public class Polymorphism
     public static IEnumerable<PolymorphicResult> FnResults
         => [new PolymorphicResult.Ok(42), new PolymorphicResult.Error("Error")];
 
+    [Benchmark]
+    [BenchmarkCategory("IsError")]
+    public bool FnIsError() => FnResult.IsError;
+
     [Benchmark(Baseline = true)]
     [BenchmarkCategory("IsError")]
     public bool PolymorphicIsError() => PolymorphicResult.IsError;
 
     [Benchmark]
-    [BenchmarkCategory("IsError")]
-    public bool FnIsError() => FnResult.IsError;
+    [BenchmarkCategory("IsOk")]
+    public bool FnIsOk() => FnResult.IsOk;
 
     [Benchmark(Baseline = true)]
     [BenchmarkCategory("IsOk")]
     public bool PolymorphicIsOk() => PolymorphicResult.IsOk;
 
     [Benchmark]
-    [BenchmarkCategory("IsOk")]
-    public bool FnIsOk() => FnResult.IsOk;
+    [BenchmarkCategory("IsErrorAnd")]
+    public bool FnIsErrorAnd() => FnResult.IsErrorAnd(static _ => true);
 
     [Benchmark(Baseline =  true)]
     [BenchmarkCategory("IsErrorAnd")]
     public bool PolymorphicIsErrorAnd() => PolymorphicResult.IsErrorAnd(static _ => true);
 
     [Benchmark]
-    [BenchmarkCategory("IsErrorAnd")]
-    public bool FnIsErrorAnd() => FnResult.IsErrorAnd(static _ => true);
+    [BenchmarkCategory("IsOkAnd")]
+    public bool FnIsOkAnd() => FnResult.IsOkAnd(static x => x > 0);
 
     [Benchmark(Baseline = true)]
     [BenchmarkCategory("IsOkAnd")]
     public bool PolymorphicIsOkAnd() => PolymorphicResult.IsOkAnd(static x => x > 0);
 
     [Benchmark]
-    [BenchmarkCategory("IsOkAnd")]
-    public bool FnIsOkAnd() => FnResult.IsOkAnd(static x => x > 0);
+    [BenchmarkCategory("Inspect")]
+    public void FnInspect() => FnResult.Inspect(static _ => { });
 
     [Benchmark(Baseline = true)]
-    [BenchmarkCategory("Map")]
-    public void PolymorphicMap() => PolymorphicResult.Map(static _ => "Mapped: {x}");
+    [BenchmarkCategory("Inspect")]
+    public void PolymorphicInspect() => PolymorphicResult.Inspect(static _ => { });
 
     [Benchmark]
     [BenchmarkCategory("Map")]
     public void FnMap() => FnResult.Map(static _ => "Mapped: {x}");
 
     [Benchmark(Baseline = true)]
-    [BenchmarkCategory("MapOr")]
-    public string PolymorphicMapOr() => PolymorphicResult.MapOr(static _ => "Mapped: {x}", string.Empty);
+    [BenchmarkCategory("Map")]
+    public void PolymorphicMap() => PolymorphicResult.Map(static _ => "Mapped: {x}");
 
     [Benchmark]
     [BenchmarkCategory("MapOr")]
     public string FnMapOr() => FnResult.MapOr(static _ => "Mapped: {x}", string.Empty);
+
+    [Benchmark(Baseline = true)]
+    [BenchmarkCategory("MapOr")]
+    public string PolymorphicMapOr() => PolymorphicResult.MapOr(static _ => "Mapped: {x}", string.Empty);
+
+    [Benchmark]
+    [BenchmarkCategory("MapOrElse")]
+    public string FnMapOrElse() => FnResult.MapOrElse(static _ => "Mapped: {x}", static _ => string.Empty);
 
     [Benchmark(Baseline = true)]
     [BenchmarkCategory("MapOrElse")]
@@ -76,14 +88,10 @@ public class Polymorphism
         => PolymorphicResult.MapOrElse(static _ => "Mapped: {x}", static _ => string.Empty);
 
     [Benchmark]
-    [BenchmarkCategory("MapOrElse")]
-    public string FnMapOrElse() => FnResult.MapOrElse(static _ => "Mapped: {x}", static _ => string.Empty);
+    [BenchmarkCategory("MapError")]
+    public void FnMapError() => FnResult.MapError(static _ => -1);
 
     [Benchmark(Baseline = true)]
     [BenchmarkCategory("MapError")]
     public void PolymorphicMapError() => PolymorphicResult.MapError(static _ => -1);
-
-    [Benchmark]
-    [BenchmarkCategory("MapError")]
-    public void FnMapError() => FnResult.MapError(static _ => -1);
 }

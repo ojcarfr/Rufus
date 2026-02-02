@@ -211,6 +211,50 @@ public class ResultTests
     }
 
     [Fact]
+    public void GivenAnOkResultAndAnyCallbackFunction_WhenInspect_ThenFunctionShouldBeInvoked()
+    {
+        Action<int> callback = Substitute.For<Action<int>>();
+        Result<int, string> sut = Result.Ok(4);
+
+        sut.Inspect(callback);
+
+        callback.Received().Invoke(4);
+    }
+
+    [Fact]
+    public void GivenAnErrorResultAndAnyCallbackFunction_WhenInspect_ThenFunctionShouldNotBeInvoked()
+    {
+        Action<int> callback = Substitute.For<Action<int>>();
+        Result<int, string> sut = Result.Error(string.Empty);
+
+        sut.Inspect(callback);
+
+        callback.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
+    [Fact]
+    public void GivenAnOkResultAndAnyCallbackFunction_WhenInspectError_ThenFunctionShouldNotBeInvoked()
+    {
+        Action<string> callback = Substitute.For<Action<string>>();
+        Result<int, string> sut = Result.Ok(4);
+
+        sut.InspectError(callback);
+
+        callback.DidNotReceive().Invoke(Arg.Any<string>());
+    }
+
+    [Fact]
+    public void GivenAnErrorResultAndAnyCallbackFunction_WhenInspectError_ThenFunctionShouldNotBeInvoked()
+    {
+        Action<string> callback = Substitute.For<Action<string>>();
+        Result<int, string> sut = Result.Error("Expected error");
+
+        sut.InspectError(callback);
+
+        callback.Received().Invoke("Expected error");
+    }
+
+    [Fact]
     public void GivenAnOkResult_WhenMap_ThenShouldTransformValue()
     {
         Result<string, string> sut = Result.Ok("1,2,3,4,5");

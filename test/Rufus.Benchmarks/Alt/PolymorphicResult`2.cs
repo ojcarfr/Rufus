@@ -13,6 +13,10 @@ public abstract record PolymorphicResult<T, TError>
 
     public abstract bool IsOkAnd(Func<T, bool> predicate);
 
+    public abstract PolymorphicResult<T, TError> Inspect(Action<T> fn);
+
+    public abstract PolymorphicResult<T, TError> InspectError(Action<TError> fn);
+
     public abstract PolymorphicResult<TMap, TError> Map<TMap>(Func<T, TMap> map);
 
     public abstract TMap MapOr<TMap>(Func<T, TMap> map, TMap @default);
@@ -40,6 +44,15 @@ public abstract record PolymorphicResult<T, TError>
 
         /// <inheritdoc />
         public override bool IsOkAnd(Func<T, bool> predicate) => predicate(Value);
+
+        public override PolymorphicResult<T, TError> Inspect(Action<T> fn)
+        {
+            fn(Value);
+
+            return this;
+        }
+
+        public override PolymorphicResult<T, TError> InspectError(Action<TError> fn) => this;
 
         /// <inheritdoc />
         public override PolymorphicResult<TMap, TError> Map<TMap>(Func<T, TMap> map)
@@ -69,6 +82,15 @@ public abstract record PolymorphicResult<T, TError>
 
         /// <inheritdoc />
         public override bool IsOkAnd(Func<T, bool> predicate) => false;
+
+        public override PolymorphicResult<T, TError> Inspect(Action<T> fn) => this;
+
+        public override PolymorphicResult<T, TError> InspectError(Action<TError> fn)
+        {
+            fn(Value);
+
+            return this;
+        }
 
         /// <inheritdoc />
         public override PolymorphicResult<TMap, TError> Map<TMap>(Func<T, TMap> map)

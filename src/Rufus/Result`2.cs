@@ -142,6 +142,36 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
+    ///     Calls the specified action with the underlying success value if the result is <see cref="Ok" />.
+    /// </summary>
+    /// <param name="fn">The callback function used when <see cref="Ok" />.</param>
+    /// <returns>Returns the original result.</returns>
+    public Result<T, TError> Inspect(Action<T> fn)
+    {
+        if(this is Ok ok)
+        {
+            fn(ok.Value);
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    ///     Calls the specified action with the underlying error value if the result is <see cref="Error" />.
+    /// </summary>
+    /// <param name="fn">The callback function used when <see cref="Error" />.</param>
+    /// <returns>Returns the original result.</returns>
+    public Result<T, TError> InspectError(Action<TError> fn)
+    {
+        if(this is Error error)
+        {
+            fn(error.Value);
+        }
+
+        return this;
+    }
+
+    /// <summary>
     ///     Maps a <see cref="Result{T,TError}" /> to success value <typeparamref name="TMap" /> by
     ///     applying the given function to a contained <see cref="Ok" /> value, leaving an
     ///     <see cref="Error" /> value untouched.

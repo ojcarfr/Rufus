@@ -753,7 +753,7 @@ csharp_place_simple_case_statement_on_same_line = never
 
 # Arrangement of Embedded Blocks
 csharp_keep_existing_embedded_block_arrangement = false
-csharp_place_simple_embedded_block_on_same_line = true
+csharp_place_simple_embedded_block_on_same_line = false
 csharp_place_simple_anonymousmethod_on_single_line = true
 
 # Arrangement of Initializers
