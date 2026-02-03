@@ -3,119 +3,74 @@ namespace Rufus.Tests;
 public class ResultTests
 {
     [Fact]
-    public void GivenAnOkValue_WhenDeconstruct_ThenShouldAssignUnderlyingValue()
+    public void GivenAnyOkResult_WhenAnd_AnyOk_ThenShouldReturnBoundOk()
     {
-        Result sut = Result.Ok(5);
+        Result<int, string> sut = Result.Ok(2);
+        Result<string, string> expected = Result.Ok("different ok");
 
-        if(sut is not Result.Ok<int>(var result))
-        {
-            Assert.Fail("Result is not OK");
+        Result<string, string> result = sut.And(expected);
 
-            return;
-        }
-
-        Assert.Equal(5, result);
+        Assert.Equal(expected, result);
     }
 
     [Fact]
-    public void GivenAnErrorValue_WhenDeconstruct_ThenShouldAssignUnderlyingValue()
+    public void GivenAnyOkResult_WhenAnd_AnyError_ThenShouldReturnBoundError()
     {
-        Result sut = Result.Error("Expected error");
+        Result<int, string> sut = Result.Ok(2);
+        Result<string, string> expected = Result.Error("late error");
 
-        if(sut is not Result.Error<string>(var result))
-        {
-            Assert.Fail("Result is not Error");
+        Result<string, string> result = sut.And(expected);
 
-            return;
-        }
-
-        Assert.Equal("Expected error", result);
+        Assert.Equal(expected, result);
     }
 
     [Fact]
-    public void GivenAnOkValue_WhenSwitch_ThenShouldMatchCovariantUnderlyingValue()
+    public void GivenAnyErrorResult_WhenAnd_AnyOk_ThenShouldReturnSourceError()
     {
-        Result sut = Result.Ok("OK");
+        Result<int, string> sut = Result.Error("early error");
+        Result<string, string> expected = Result.Ok("foo");
 
-        object? result = sut switch
-        {
-            Result.Ok<object>(var value) => value,
-            _ => default,
-        };
+        Result<string, string> result = sut.And(expected);
 
-        Assert.Equal("OK", result);
+        Assert.Equal(Result.Error("early error"), result);
     }
 
     [Fact]
-    public void GivenAnErrorValue_WhenSwitch_ThenShouldMatchCovariantUnderlyingValue()
+    public void GivenAnyErrorResult_WhenAnd_AnyError_ThenShouldReturnSourceError()
     {
-        Result sut = Result.Error("Expected error");
+        Result<int, string> sut = Result.Error("not a 2");
+        Result<string, string> expected = Result.Error("late error");
 
-        object? result = sut switch
-        {
-            Result.Error<object>(var value) => value,
-            _ => default,
-        };
+        Result<string, string> result = sut.And(expected);
 
-        Assert.Equal("Expected error", result);
+        Assert.Equal(Result.Error("not a 2"), result);
     }
 
     [Fact]
-    public void GivenAnOkValue_WhenCastToGenericResult_ThenShouldMatchOkValue()
+    public void GivenAnOkResultAndAnyBindableFunction_WhenAndThen_ThenBoundFunctionShouldBeInvoked()
     {
-        Result<int, string> sut = Result.Ok(42);
+        const int OK_VALUE = 42;
+        Result<int, string> sut = Result.Ok(OK_VALUE);
+        Result<string, string> expected = Result.Ok("Bound value");
+        Func<int, Result<string, string>> bindableFunction = Substitute.For<Func<int, Result<string, string>>>();
+        bindableFunction.Invoke(OK_VALUE).Returns(expected);
 
-        int result = sut switch
-        {
-            Result.Ok<int>(var value) => value,
-            _ => default,
-        };
+        Result<string, string> result = sut.AndThen(bindableFunction);
 
-        Assert.Equal(42, result);
+        Assert.Equal(expected, result);
+        bindableFunction.Received().Invoke(OK_VALUE);
     }
 
     [Fact]
-    public void GivenAnErrorValue_WhenCastToGenericResult_ThenShouldMatchErrorValue()
+    public void GivenAnErrorResultAndAnyBindableFunction_WhenAndThen_ThenBoundFunctionShouldNotBeInvoked()
     {
         Result<int, string> sut = Result.Error("Expected error");
+        Func<int, Result<string, string>> bindableFunction = Substitute.For<Func<int, Result<string, string>>>();
 
-        string? result = sut switch
-        {
-            Result.Error<string>(var value) => value,
-            _ => default,
-        };
+        Result<string, string> result = sut.AndThen(bindableFunction);
 
-        Assert.Equal("Expected error", result);
-    }
-
-    [Fact]
-    public void GivenAnOkValue_WhenCastToGenericResult_ThenShouldMatchContravariantOkValue()
-    {
-        Result<object, string> sut = Result.Ok<object>("ok");
-
-        bool result = sut switch
-        {
-            Result.Ok<object>(List<string> _) => false,
-            Result.Ok<object>(string _) => true,
-            _ => false,
-        };
-
-        Assert.True(result);
-    }
-
-    [Fact]
-    public void GivenAnErrorValue_WhenCastToGenericResult_ThenShouldMatchContravariantErrorValue()
-    {
-        Result<int, object> sut = Result.Error<object>("Expected error");
-
-        bool result = sut switch
-        {
-            Result.Error<object>(Exception _) => false,
-            Result.Error<object>(string _) => true,
-            _ => false,
-        };
-
-        Assert.True(result);
+        Assert.Equal(Result.Error("Expected error"), result);
+        bindableFunction.DidNotReceive().Invoke(Arg.Any<int>());
     }
 
     [Fact]

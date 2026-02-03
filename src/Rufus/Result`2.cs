@@ -18,37 +18,6 @@ public abstract record Result<T, TError> : Result
 {
     private Result() { }
 
-    /// <summary>
-    ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
-    ///     contains the underlying success value.
-    /// </summary>
-    public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
-
-    /// <summary>
-    /// </summary>
-    /// <param name="error"></param>
-    /// <returns></returns>
-    public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) => new Error(error.Value);
-
-    /// <summary>
-    ///     Represents the successful result of an operation, containing a value of the specified type.
-    /// </summary>
-    /// <param name="Value">The underlying successful value.</param>
-    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>;
-
-    /// <summary>
-    ///     Represents a failed result containing error information of the specified type.
-    /// </summary>
-    /// <remarks>
-    ///     Use this type to indicate an operation that did not succeed and to provide details
-    ///     about the failure. The generic parameter specifies the type of error information returned.
-    /// </remarks>
-    /// <param name="Value">
-    ///     The underlying failure value.
-    ///     Cannot be null if the error type is a reference type.
-    /// </param>
-    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
-
     #pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 
     /// <summary>
@@ -63,11 +32,7 @@ public abstract record Result<T, TError> : Result
     ///     Assert.True(result.IsError);
     ///     </code>
     /// </example>
-    public bool IsError => this switch
-    {
-        Error => true,
-        _ => false,
-    };
+    public bool IsError => this is Error;
 
     /// <summary>
     ///     Gets a value indicating whether the result is <see cref="Ok" />.
@@ -81,11 +46,94 @@ public abstract record Result<T, TError> : Result
     ///     Assert.False(result.IsOk);
     ///     </code>
     /// </example>
-    public bool IsOk => this switch
+    public bool IsOk => this is Ok;
+
+    /// <summary>
+    ///     Returns a new result in case of <see cref="Ok" />.
+    /// </summary>
+    /// <remarks>
+    ///     Arguments passed to <see cref="And{TMap}" /> are eagerly evaluated; if you are passing the result of a
+    ///     function call, it is recommended to use <see cref="AndThen{TMap}" />, which is lazily evaluated.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; x = Result.Ok(2);
+    ///     Result&lt;string, string&gt; y = Result.Error("late error");
+    ///     Assert.Equal(Result.Error("late error"), x.And(y));
+    ///
+    ///     x = Result.Error("early error");
+    ///     y = Result.Ok("foo");
+    ///     Assert.Equal(Result.Error("early error"), x.And(y));
+    ///
+    ///     x = Result.Error("not a 2");
+    ///     y = Result.Error("late error");
+    ///     Assert.Equal(Result.Error("not a 2"), x.And(y));
+    ///
+    ///     x = Result.Ok(2);
+    ///     y = Result.Ok("different result type");
+    ///     Assert.Equal(Result.Ok("different result type"), x.And(y));
+    ///     </code>
+    /// </example>
+    /// <param name="result">The result to be returned in case of <see cref="Ok" />.</param>
+    /// <typeparam name="TMap">Type of the returned success value.</typeparam>
+    /// <returns>
+    ///     Returns <paramref name="result" /> if the result is <see cref="Ok" />, otherwise returns the
+    ///     <see cref="Error" /> value.
+    /// </returns>
+    public Result<TMap, TError> And<TMap>(Result<TMap, TError> result) => this switch
     {
-        Ok => true,
-        _ => false,
+        Ok => result,
+        Error error => new Result<TMap, TError>.Error(error.Value),
     };
+
+    /// <summary>
+    ///     Binds <paramref name="fn" /> function to be executed if the result is <see cref="Ok" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    /// static Result&lt;string, string> SqThenToString(int value)
+    /// {
+    ///     checked
+    ///     {
+    ///         try
+    ///         {
+    ///             return Result.Ok((value * value).ToString());
+    ///         }
+    ///         catch(OverflowException)
+    ///         {
+    ///             return Result.Error("overflowed");
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// Assert.Equal(Result.Ok(4.ToString()), Result.Ok(2).AndThen(SqThenToString));
+    /// Assert.Equal(Result.Error("overflowed"), Result.Ok(1_000_000).AndThen(SqThenToString));
+    /// Assert.Equal(Result.Error("not a number"), Result.Error("not a number").AndThen((int x) => SqThenToString(x)));
+    ///     </code>
+    /// </example>
+    /// <param name="fn">The bound function to the current result.</param>
+    /// <typeparam name="TMap">The type of result returned by bound function.</typeparam>
+    /// <returns>The result of the bound function if <see cref="Ok" />, same error in case of <see cref="Error" />.</returns>
+    public Result<TMap, TError> AndThen<TMap>(Func<T, Result<TMap, TError>> fn) => this switch
+    {
+        Ok ok => fn(ok.Value),
+        Error error => new Result<TMap, TError>.Error(error.Value),
+    };
+
+    /// <summary>
+    ///     Calls the specified action with the underlying success value if the result is <see cref="Ok" />.
+    /// </summary>
+    /// <param name="fn">The callback function used when <see cref="Ok" />.</param>
+    /// <returns>Returns the original result.</returns>
+    public Result<T, TError> Inspect(Action<T> fn)
+    {
+        if(this is Ok ok)
+        {
+            fn(ok.Value);
+        }
+
+        return this;
+    }
 
     /// <summary>
     ///     Checks whether the result is <see cref="Error" /> and the underlying value satisfies
@@ -140,21 +188,6 @@ public abstract record Result<T, TError> : Result
         Ok ok => predicate(ok.Value),
         _ => false,
     };
-
-    /// <summary>
-    ///     Calls the specified action with the underlying success value if the result is <see cref="Ok" />.
-    /// </summary>
-    /// <param name="fn">The callback function used when <see cref="Ok" />.</param>
-    /// <returns>Returns the original result.</returns>
-    public Result<T, TError> Inspect(Action<T> fn)
-    {
-        if(this is Ok ok)
-        {
-            fn(ok.Value);
-        }
-
-        return this;
-    }
 
     /// <summary>
     ///     Calls the specified action with the underlying error value if the result is <see cref="Error" />.
@@ -263,11 +296,43 @@ public abstract record Result<T, TError> : Result
     /// <param name="map">The function used to map the error.</param>
     /// <typeparam name="TMap">Type of the returning error.</typeparam>
     public Result<T, TMap> MapError<TMap>(Func<TError, TMap> map)
-        where TMap : notnull => this switch
-    {
-        Ok ok => new Result<T, TMap>.Ok(ok.Value),
-        Error error => new Result<T, TMap>.Error(map(error.Value)),
-    };
+        where TMap : notnull
+        => this switch
+        {
+            Ok ok => new Result<T, TMap>.Ok(ok.Value),
+            Error error => new Result<T, TMap>.Error(map(error.Value)),
+        };
+
+    /// <summary>
+    ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
+    ///     contains the underlying success value.
+    /// </summary>
+    public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
+
+    /// <summary>
+    /// </summary>
+    /// <param name="error"></param>
+    /// <returns></returns>
+    public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) => new Error(error.Value);
+
+    /// <summary>
+    ///     Represents the successful result of an operation, containing a value of the specified type.
+    /// </summary>
+    /// <param name="Value">The underlying successful value.</param>
+    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>;
+
+    /// <summary>
+    ///     Represents a failed result containing error information of the specified type.
+    /// </summary>
+    /// <remarks>
+    ///     Use this type to indicate an operation that did not succeed and to provide details
+    ///     about the failure. The generic parameter specifies the type of error information returned.
+    /// </remarks>
+    /// <param name="Value">
+    ///     The underlying failure value.
+    ///     Cannot be null if the error type is a reference type.
+    /// </param>
+    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
 
     #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 }
