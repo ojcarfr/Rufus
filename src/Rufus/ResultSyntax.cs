@@ -47,6 +47,27 @@ public static class ResultSyntax
     extension<T>(Result.Ok<T> ok)
     {
         /// <summary>
+        ///     Deconstructs the success result into its underlying value.
+        /// </summary>
+        public void Deconstruct(out T value) => value = ok.Value;
+    }
+
+    extension<TError>(Result.Error<TError> error)
+        where TError : notnull
+    {
+        /// <summary>
+        ///     Deconstructs the error result into its underlying value.
+        /// </summary>
+        public void Deconstruct(out TError value) => value = error.Value;
+    }
+
+    /// <summary>
+    ///     Value type to pass a success value that can be implicitly converted to a proper
+    ///     <see cref="Result{T, TError}" /> by avoiding error generic type definition.
+    /// </summary>
+    public readonly record struct OkValue<T>(T Value) : Result.Ok<T>
+    {
+        /// <summary>
         ///     Binds <paramref name="fn" /> function to be executed if the result is <see cref="Ok" />.
         /// </summary>
         /// <example>
@@ -76,15 +97,37 @@ public static class ResultSyntax
         /// <typeparam name="TError">The type of the error result.</typeparam>
         /// <returns>The result of the bound function if <see cref="Ok" />, same error in case of <see cref="Error" />.</returns>
         public Result<TMap, TError> AndThen<TMap, TError>(Func<T, Result<TMap, TError>> fn)
-            where TError : notnull => fn(ok.Value);
+            where TError : notnull => fn(Value);
 
         /// <summary>
-        ///     Deconstructs the success result into its underlying value.
+        ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error" />.
+        ///     This function can be used for control flow based on result values.
         /// </summary>
-        public void Deconstruct(out T value) => value = ok.Value;
+        /// <example>
+        ///     <code>
+        ///     Result&lt;int, int&gt; Sq(int x) => Result.Ok(x * x);
+        ///     Result&lt;int, int&gt; Err(int x) => Result.Error(x);
+        ///
+        ///     Assert.Equal(Result.Ok(2), Result.Ok(2).OrElse(Sq).OrElse(Sq));
+        ///     Assert.Equal(Result.Ok(2), Result.Ok(2).OrElse(Err).OrElse(Sq));
+        ///     Assert.Equal(Result.Ok(9), Result.Error(3).OrElse(Sq).OrElse(Err));
+        ///     Assert.Equal(Result.Error(3), Result.Error(3).OrElse(Err).OrElse(Sq));
+        ///     </code>
+        /// </example>
+        /// <param name="op">The bound function that handles the error result and return a new result.</param>
+        /// <typeparam name="TMap">Type of the mapped error by the bound function.</typeparam>
+        /// <typeparam name="TError">Type of the source result error.</typeparam>
+        /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok" /> value.</returns>
+        public Result<T, TMap> OrElse<TError, TMap>(Func<TError, Result<T, TMap>> op)
+            where TMap : notnull
+            where TError : notnull => Result.Ok(Value);
     }
 
-    extension<TError>(Result.Error<TError> error)
+    /// <summary>
+    ///     Value type to pass an error value that can be implicitly converted to a proper
+    ///     <see cref="Result{T, TError}" /> by avoiding success generic type definition.
+    /// </summary>
+    public readonly record struct ErrorValue<TError>(TError Value) : Result.Error<TError>
         where TError : notnull
     {
         /// <summary>
@@ -115,24 +158,28 @@ public static class ResultSyntax
         /// <param name="_">The bound function to the current result.</param>
         /// <returns>The result of the bound function if <see cref="Ok" />, same error in case of <see cref="Error" />.</returns>
         public Result<TOutput, TError> AndThen<TInput, TOutput>(Func<TInput, Result<TOutput, TError>> _)
-            => Result.Error(error.Value);
+            => Result.Error(Value);
 
         /// <summary>
-        ///     Deconstructs the error result into its underlying value.
+        ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error" />.
+        ///     This function can be used for control flow based on result values.
         /// </summary>
-        public void Deconstruct(out TError value) => value = error.Value;
+        /// <example>
+        ///     <code>
+        ///     Result&lt;int, int&gt; Sq(int x) => Result.Ok(x * x);
+        ///     Result&lt;int, int&gt; Err(int x) => Result.Error(x);
+        ///
+        ///     Assert.Equal(Result.Ok(2), Result.Ok(2).OrElse(Sq).OrElse(Sq));
+        ///     Assert.Equal(Result.Ok(2), Result.Ok(2).OrElse(Err).OrElse(Sq));
+        ///     Assert.Equal(Result.Ok(9), Result.Error(3).OrElse(Sq).OrElse(Err));
+        ///     Assert.Equal(Result.Error(3), Result.Error(3).OrElse(Err).OrElse(Sq));
+        ///     </code>
+        /// </example>
+        /// <param name="op">The bound function that handles the error result and return a new result.</param>
+        /// <typeparam name="T">Type of the success value.</typeparam>
+        /// <typeparam name="TMap">Type of the mapped error by the bound function.</typeparam>
+        /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok" /> value.</returns>
+        public Result<T, TMap> OrElse<T, TMap>(Func<TError, Result<T, TMap>> op)
+            where TMap : notnull => op(Value);
     }
-
-    /// <summary>
-    ///     Value type to pass a success value that can be implicitly converted to a proper
-    ///     <see cref="Result{T, TError}" /> by avoiding error generic type definition.
-    /// </summary>
-    public readonly record struct OkValue<T>(T Value) : Result.Ok<T>;
-
-    /// <summary>
-    ///     Value type to pass an error value that can be implicitly converted to a proper
-    ///     <see cref="Result{T, TError}" /> by avoiding success generic type definition.
-    /// </summary>
-    public readonly record struct ErrorValue<TError>(TError Value) : Result.Error<TError>
-        where TError : notnull;
 }

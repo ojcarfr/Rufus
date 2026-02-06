@@ -289,4 +289,53 @@ public class ResultTests
 
         Assert.Equal(Result.Error("error code: 13"), result);
     }
+
+    [Fact]
+    public void GivenAnOkResult_WhenOr_ThenShouldReturnOk()
+    {
+        Result<int, int> sut = Result.Ok(2);
+        Result<int, string> other = Result.Error("disregarded");
+
+        Result<int, string> result = sut.Or(other);
+
+        Assert.Equal(Result.Ok(2), result);
+    }
+
+    [Fact]
+    public void GivenAnErrorResult_WhenOr_ThenShouldReturnOtherResult()
+    {
+        Result<int, int> sut = Result.Error(2);
+        Result<int, string> other = Result.Error("Expected error");
+
+        Result<int, string> result = sut.Or(other);
+
+        Assert.Equal(other, result);
+    }
+
+    [Fact]
+    public void GivenAnOkResultAndAnyBindableFunction_WhenOrElse_ThenBoundFunctionShouldNotBeInvoked()
+    {
+        ResultSyntax.OkValue<int> expected = Result.Ok(2);
+        Result<int, int> sut = Result.Ok(expected.Value);
+        Func<int, Result<int, string>>? op = Substitute.For<Func<int, Result<int, string>>>();
+
+        Result<int, string> result = sut.OrElse(op);
+
+        Assert.Equal(expected, result);
+        op.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
+    [Fact]
+    public void GivenAnErrorResultAndAnyBindableFunction_WhenOrElse_ThenBoundFunctionShouldBeInvoked()
+    {
+        ResultSyntax.OkValue<int> expected = Result.Ok(50);
+        Result<int, int> sut = Result.Error(2);
+        Func<int, Result<int, string>> op = Substitute.For<Func<int, Result<int, string>>>();
+        op.Invoke(Arg.Any<int>()).Returns(expected);
+
+        Result<int, string> result = sut.OrElse(op);
+
+        Assert.Equal(expected, result);
+        op.Received().Invoke(2);
+    }
 }

@@ -119,25 +119,52 @@ public class ResultSyntaxTests
     }
 
     [Fact]
-    public void GivenAnyResultValue_WhenAndThen_ThenShouldReturnBoundFunctionResult()
+    public void GivenAnyOkResult_WhenAndThen_ThenShouldInvokeBoundFunction()
     {
-        static Result<string, string> SqThenToString(int value)
-        {
-            checked
-            {
-                try
-                {
-                    return Result.Ok((value * value).ToString());
-                }
-                catch(OverflowException)
-                {
-                    return Result.Error("overflowed");
-                }
-            }
-        }
+        Result<int, string> sut = Result.Ok(2);
+        Func<int, Result<string, string>> fn = Substitute.For<Func<int, Result<string, string>>>();
+        fn.Invoke(Arg.Any<int>()).Returns(Result.Ok("Received"));
 
-        Assert.Equal(Result.Ok(4.ToString()), Result.Ok(2).AndThen(SqThenToString));
-        Assert.Equal(Result.Error("overflowed"), Result.Ok(1_000_000).AndThen(SqThenToString));
-        Assert.Equal(Result.Error("not a number"), Result.Error("not a number").AndThen((int x) => SqThenToString(x)));
+        Result<string, string> result = sut.AndThen(fn);
+
+        Assert.Equal(Result.Ok("Received"), result);
+        fn.Received().Invoke(2);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResult_WhenAndThen_ThenShouldNotInvokeBoundFunction()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+        Func<int, Result<string, string>> fn = Substitute.For<Func<int, Result<string, string>>>();
+
+        Result<string, string> result = sut.AndThen(fn);
+
+        Assert.Equal(Result.Error("Expected error"), result);
+    }
+
+    [Fact]
+    public void GivenAnyOkResult_WhenOrElse_ThenShouldReturnOkValue()
+    {
+        Result<int, int> sut = Result.Ok(2);
+        Func<int, Result<int, string>> op = Substitute.For<Func<int, Result<int, string>>>();
+
+        Result<int, string> result = sut.OrElse(op);
+
+        Assert.Equal(Result.Ok(2), result);
+        op.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
+    [Fact]
+    public void GivenAnyErrorResult_WhenOrElse_ThenShouldReturnBoundFunctionResult()
+    {
+        Result<int, int> sut = Result.Error(2);
+        Result<int, string> expected = Result.Ok(9);
+        Func<int, Result<int, string>> op = Substitute.For<Func<int, Result<int, string>>>();
+        op.Invoke(Arg.Any<int>()).Returns(expected);
+
+        Result<int, string> result = sut.OrElse(op);
+
+        Assert.Equal(expected, result);
+        op.Received().Invoke(2);
     }
 }

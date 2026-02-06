@@ -49,6 +49,52 @@ public abstract record Result<T, TError> : Result
     public bool IsOk => this is Ok;
 
     /// <summary>
+    ///     Checks whether the result is <see cref="Error" /> and the underlying value satisfies
+    ///     the given predicate.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Error("Some error message");
+    ///     Assert.True(result.IsErrorAnd(x =&gt; x == "Some error message"));
+    ///
+    ///     Result&lt;int, string&gt; result = Result.Error("Unexpected error");
+    ///     Assert.False(result.IsErrorAnd(x =&gt; x == "Some error message"));
+    ///
+    ///     Result&lt;int, string&gt; result = Result.Ok(50);
+    ///     Assert.False(result.IsErrorAnd(x =&gt; x == "Some error message"));
+    ///     </code>
+    /// </example>
+    /// <param name="predicate">The expression used to evaluate the error value.</param>
+    /// <returns>
+    ///     <c>true</c> if the result is <see cref="Error" /> and the underlying value satisfies
+    ///     the given predicate.
+    /// </returns>
+    public bool IsErrorAnd(Func<TError, bool> predicate) => this is Error error && predicate(error.Value);
+
+    /// <summary>
+    ///     Checks whether the result is <see cref="Ok" /> and the underlying value satisfies
+    ///     the given predicate.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(2);
+    ///     Assert.True(result.IsOkAnd(x =&gt; x &gt; 0));
+    ///
+    ///     Result&lt;int, string&gt; result = Result.Ok(-1);
+    ///     Assert.False(result.IsOkAnd(x =&gt; x &gt; 0));
+    ///
+    ///     result = Result.Error("Some error message");
+    ///     Assert.False(result.IsOkAnd(x =&gt; x &gt; 0));
+    ///     </code>
+    /// </example>
+    /// <param name="predicate">The expression used to evaluate the success value.</param>
+    /// <returns>
+    ///     <c>true</c> if the result is <see cref="Ok" /> and the underlying value inside of it
+    ///     matches a predicate.
+    /// </returns>
+    public bool IsOkAnd(Func<T, bool> predicate) => this is Ok ok && predicate(ok.Value);
+
+    /// <summary>
     ///     Returns a new result in case of <see cref="Ok" />.
     /// </summary>
     /// <remarks>
@@ -80,11 +126,8 @@ public abstract record Result<T, TError> : Result
     ///     Returns <paramref name="result" /> if the result is <see cref="Ok" />, otherwise returns the
     ///     <see cref="Error" /> value.
     /// </returns>
-    public Result<TMap, TError> And<TMap>(Result<TMap, TError> result) => this switch
-    {
-        Ok => result,
-        Error error => new Result<TMap, TError>.Error(error.Value),
-    };
+    public Result<TMap, TError> And<TMap>(Result<TMap, TError> result)
+        => this is Error error ? new Result<TMap, TError>.Error(error.Value) : result;
 
     /// <summary>
     ///     Binds <paramref name="fn" /> function to be executed if the result is <see cref="Ok" />.
@@ -121,6 +164,67 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
+    ///     Returns the specified <paramref name="result" /> in case of <see cref="Error" />.
+    /// </summary>
+    /// <remarks>
+    ///     Arguments passed to <see cref="Or" /> are eagerly evaluated; if you are passing the result of a function call, it
+    ///     is recommended to use <see cref="OrElse" />, which is lazily evaluated.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; x = Result.Ok(2);
+    ///     Result&lt;int, string&gt; y = Result.Error("late error");
+    ///     Assert.Equal(Result.Ok(2), x.Or(y));
+    ///
+    ///     x = Result.Error("early error");
+    ///     y = Result.Ok(2);
+    ///     Assert.Equal(Result.Ok(2), x.Or(y));
+    ///
+    ///     x = Result.Error("not a 2");
+    ///     y = Result.Error("late error");
+    ///     Assert.Equal(Result.Error("late error"), x.Or(y));
+    ///
+    ///     x = Result.Ok(2);
+    ///     y = Result.Ok(100);
+    ///     Assert.Equal(Result.Ok(2), x.Or(y));
+    ///     </code>
+    /// </example>
+    /// <param name="result">The result returned in case of <see cref="Error" />.</param>
+    /// <typeparam name="TMap">The type of the returned error.</typeparam>
+    /// <returns>
+    ///     Returns <paramref name="result" /> if the result is <see cref="Error" />, otherwise returns the
+    ///     <see cref="Ok" /> value.
+    /// </returns>
+    public Result<T, TMap> Or<TMap>(Result<T, TMap> result)
+        where TMap : notnull => this is Ok ok ? new Result<T, TMap>.Ok(ok.Value) : result;
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error" />.
+    ///     This function can be used for control flow based on result values.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, int&gt; Sq(int x) => Result.Ok(x * x);
+    ///     Result&lt;int, int&gt; Err(int x) => Result.Error(x);
+    ///
+    ///     Assert.Equal(Result.Ok(2), Result.Ok(2).OrElse(Sq).OrElse(Sq));
+    ///     Assert.Equal(Result.Ok(2), Result.Ok(2).OrElse(Err).OrElse(Sq));
+    ///     Assert.Equal(Result.Ok(9), Result.Error(3).OrElse(Sq).OrElse(Err));
+    ///     Assert.Equal(Result.Error(3), Result.Error(3).OrElse(Err).OrElse(Sq));
+    ///     </code>
+    /// </example>
+    /// <param name="op">The bound function that handles the error result and return a new result.</param>
+    /// <typeparam name="TMap">Type of the mapped error by the bound function.</typeparam>
+    /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok" /> value.</returns>
+    public Result<T, TMap> OrElse<TMap>(Func<TError, Result<T, TMap>> op)
+        where TMap : notnull
+        => this switch
+        {
+            Ok ok => new Result<T, TMap>.Ok(ok.Value),
+            Error error => op(error.Value),
+        };
+
+    /// <summary>
     ///     Calls the specified action with the underlying success value if the result is <see cref="Ok" />.
     /// </summary>
     /// <param name="fn">The callback function used when <see cref="Ok" />.</param>
@@ -134,60 +238,6 @@ public abstract record Result<T, TError> : Result
 
         return this;
     }
-
-    /// <summary>
-    ///     Checks whether the result is <see cref="Error" /> and the underlying value satisfies
-    ///     the given predicate.
-    /// </summary>
-    /// <example>
-    ///     <code>
-    ///     Result&lt;int, string&gt; result = Result.Error("Some error message");
-    ///     Assert.True(result.IsErrorAnd(x =&gt; x == "Some error message"));
-    ///
-    ///     Result&lt;int, string&gt; result = Result.Error("Unexpected error");
-    ///     Assert.False(result.IsErrorAnd(x =&gt; x == "Some error message"));
-    ///
-    ///     Result&lt;int, string&gt; result = Result.Ok(50);
-    ///     Assert.False(result.IsErrorAnd(x =&gt; x == "Some error message"));
-    ///     </code>
-    /// </example>
-    /// <param name="predicate">The expression used to evaluate the error value.</param>
-    /// <returns>
-    ///     <c>true</c> if the result is <see cref="Error" /> and the underlying value satisfies
-    ///     the given predicate.
-    /// </returns>
-    public bool IsErrorAnd(Func<TError, bool> predicate) => this switch
-    {
-        Error error => predicate(error.Value),
-        _ => false,
-    };
-
-    /// <summary>
-    ///     Checks whether the result is <see cref="Ok" /> and the underlying value satisfies
-    ///     the given predicate.
-    /// </summary>
-    /// <example>
-    ///     <code>
-    ///     Result&lt;int, string&gt; result = Result.Ok(2);
-    ///     Assert.True(result.IsOkAnd(x =&gt; x &gt; 0));
-    ///
-    ///     Result&lt;int, string&gt; result = Result.Ok(-1);
-    ///     Assert.False(result.IsOkAnd(x =&gt; x &gt; 0));
-    ///
-    ///     result = Result.Error("Some error message");
-    ///     Assert.False(result.IsOkAnd(x =&gt; x &gt; 0));
-    ///     </code>
-    /// </example>
-    /// <param name="predicate">The expression used to evaluate the success value.</param>
-    /// <returns>
-    ///     <c>true</c> if the result is <see cref="Ok" /> and the underlying value inside of it
-    ///     matches a predicate.
-    /// </returns>
-    public bool IsOkAnd(Func<T, bool> predicate) => this switch
-    {
-        Ok ok => predicate(ok.Value),
-        _ => false,
-    };
 
     /// <summary>
     ///     Calls the specified action with the underlying error value if the result is <see cref="Error" />.
@@ -255,11 +305,7 @@ public abstract record Result<T, TError> : Result
     /// <param name="map">The function used to map the success value.</param>
     /// <param name="default">The default value returned in case of <see cref="Error" />.</param>
     /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
-    public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) => this switch
-    {
-        Ok ok => map(ok.Value),
-        Error => @default,
-    };
+    public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) => this is Ok ok ? map(ok.Value) : @default;
 
     /// <summary>
     ///     Maps a <see cref="Result{T,TError}" /> to <typeparamref name="TMap" /> by applying fallback function
@@ -319,7 +365,11 @@ public abstract record Result<T, TError> : Result
     ///     Represents the successful result of an operation, containing a value of the specified type.
     /// </summary>
     /// <param name="Value">The underlying successful value.</param>
-    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>;
+    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>
+    {
+        /// <inheritdoc />
+        public override string ToString() => $"Ok {{ Value = {Value} }}";
+    }
 
     /// <summary>
     ///     Represents a failed result containing error information of the specified type.
@@ -332,7 +382,11 @@ public abstract record Result<T, TError> : Result
     ///     The underlying failure value.
     ///     Cannot be null if the error type is a reference type.
     /// </param>
-    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
+    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>
+    {
+        /// <inheritdoc />
+        public override string ToString() => $"Error {{ Value = {Value} }}";
+    }
 
     #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 }
