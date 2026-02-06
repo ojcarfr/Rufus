@@ -1,10 +1,36 @@
 ﻿namespace Rufus;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
 ///     Defines the syntax for <see cref="Result" /> creation.
 /// </summary>
 public static class ResultSyntax
 {
+    /// <summary>
+    ///     Unnest any <see cref="Result{T,TError}" /> that returns any result else in case of <see cref="Ok" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;Result&lt;string, int&gt;, int&gt; x = Result.Ok(Result.Ok("hello"));
+    ///     Assert.Equal(Result.Ok("hello"), x.Flatten());
+    ///
+    ///     x = Result.Ok(Result.Error(6));
+    ///     Assert.Equal(Result.Error(6), x.Flatten());
+    ///
+    ///     x = Result.Error(6);
+    ///     Assert.Equal(Result.Error(6), x.Flatten());
+    ///     </code>
+    /// </example>
+    public static Result<T, TError> Flatten<T, TError>(this Result<Result<T, TError>, TError> result)
+        where TError : notnull
+        => result switch
+        {
+            Result<Result<T, TError>, TError>.Ok ok => ok.Value,
+            Result<Result<T, TError>, TError>.Error error => new Result<T, TError>.Error(error.Value),
+            _ => throw new SwitchExpressionException(result),
+        };
+
     /// <summary>
     ///     Defines operations to instantiate results in a less verbose fashion relaying on value types that implicitly can be
     ///     converted into a generic result union.

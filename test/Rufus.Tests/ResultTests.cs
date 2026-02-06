@@ -338,4 +338,25 @@ public class ResultTests
         Assert.Equal(expected, result);
         op.Received().Invoke(2);
     }
+
+    [Fact]
+    public void GivenAnyOkResultWithAnyNestedResult_WhenFlatten_ThenShouldReturnNestedResult()
+    {
+        Result<string, int> expected = Result.Error(6);
+        Result<Result<string, int>, int> sut = Result.Ok(expected);
+
+        Result<string, int> result = sut.Flatten();
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResult_WhenFlatten_ThenShouldReturnSameError()
+    {
+        Result<Result<string, int>, int> sut = Result.Error(6);
+
+        Result<string, int> result = sut.Flatten();
+
+        Assert.Equal(Result.Error(6), result);
+    }
 }
