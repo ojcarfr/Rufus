@@ -24,6 +24,7 @@ public static class ResultSyntax
     /// </example>
     public static Result<T, TError> Flatten<T, TError>(this Result<Result<T, TError>, TError> result)
         where TError : notnull
+        where T : notnull
         => result switch
         {
             Result<Result<T, TError>, TError>.Ok ok => ok.Value,
@@ -51,7 +52,8 @@ public static class ResultSyntax
         ///         };
         ///     </code>
         /// </example>
-        public static OkValue<T> Ok<T>(T value) => new(value);
+        public static OkValue<T> Ok<T>(T value)
+            where T : notnull => new(value);
 
         /// <summary>
         ///     Returns a failure value containing the specified <paramref name="value" />.
@@ -71,6 +73,7 @@ public static class ResultSyntax
     }
 
     extension<T>(Result.Ok<T> ok)
+        where T : notnull
     {
         /// <summary>
         ///     Deconstructs the success result into its underlying value.
@@ -92,6 +95,7 @@ public static class ResultSyntax
     ///     <see cref="Result{T, TError}" /> by avoiding error generic type definition.
     /// </summary>
     public readonly record struct OkValue<T>(T Value) : Result.Ok<T>
+        where T : notnull
     {
         /// <summary>
         ///     Binds <paramref name="fn" /> function to be executed if the result is <see cref="Ok" />.
@@ -123,7 +127,9 @@ public static class ResultSyntax
         /// <typeparam name="TError">The type of the error result.</typeparam>
         /// <returns>The result of the bound function if <see cref="Ok" />, same error in case of <see cref="Error" />.</returns>
         public Result<TMap, TError> AndThen<TMap, TError>(Func<T, Result<TMap, TError>> fn)
-            where TError : notnull => fn(Value);
+            where TError : notnull
+            where TMap : notnull
+            => fn(Value);
 
         /// <summary>
         ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error" />.
@@ -141,12 +147,12 @@ public static class ResultSyntax
         ///     </code>
         /// </example>
         /// <param name="op">The bound function that handles the error result and return a new result.</param>
-        /// <typeparam name="TMap">Type of the mapped error by the bound function.</typeparam>
         /// <typeparam name="TError">Type of the source result error.</typeparam>
+        /// <typeparam name="TMapError">Type of the mapped error by the bound function.</typeparam>
         /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok" /> value.</returns>
-        public Result<T, TMap> OrElse<TError, TMap>(Func<TError, Result<T, TMap>> op)
-            where TMap : notnull
-            where TError : notnull => Result.Ok(Value);
+        public Result<T, TMapError> OrElse<TError, TMapError>(Func<TError, Result<T, TMapError>> op)
+            where TError : notnull
+            where TMapError : notnull => Result.Ok(Value);
     }
 
     /// <summary>
@@ -183,8 +189,8 @@ public static class ResultSyntax
         /// </example>
         /// <param name="_">The bound function to the current result.</param>
         /// <returns>The result of the bound function if <see cref="Ok" />, same error in case of <see cref="Error" />.</returns>
-        public Result<TOutput, TError> AndThen<TInput, TOutput>(Func<TInput, Result<TOutput, TError>> _)
-            => Result.Error(Value);
+        public Result<TMap, TError> AndThen<T, TMap>(Func<T, Result<TMap, TError>> _)
+            where TMap : notnull => Result.Error(Value);
 
         /// <summary>
         ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error" />.
@@ -203,9 +209,11 @@ public static class ResultSyntax
         /// </example>
         /// <param name="op">The bound function that handles the error result and return a new result.</param>
         /// <typeparam name="T">Type of the success value.</typeparam>
-        /// <typeparam name="TMap">Type of the mapped error by the bound function.</typeparam>
+        /// <typeparam name="TErrorMap">Type of the mapped error by the bound function.</typeparam>
         /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok" /> value.</returns>
-        public Result<T, TMap> OrElse<T, TMap>(Func<TError, Result<T, TMap>> op)
-            where TMap : notnull => op(Value);
+        public Result<T, TErrorMap> OrElse<T, TErrorMap>(Func<TError, Result<T, TErrorMap>> op)
+            where TErrorMap : notnull
+            where T : notnull
+            => op(Value);
     }
 }

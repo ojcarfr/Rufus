@@ -1,5 +1,7 @@
 namespace Rufus;
 
+using System.Text;
+
 /// <summary>
 ///     <see cref="Result{T,TError}" /> is the type used for returning and propagating errors. It is a discriminated union
 ///     with the variants <see cref="Ok" />, representing success and containing a value, and <see cref="Error" />,
@@ -14,6 +16,7 @@ namespace Rufus;
 /// <typeparam name="T">Returned type on succeed paths.</typeparam>
 /// <typeparam name="TError">Returned type on failed paths.</typeparam>
 public abstract record Result<T, TError> : Result
+    where T : notnull
     where TError : notnull
 {
     private Result() { }
@@ -127,6 +130,7 @@ public abstract record Result<T, TError> : Result
     ///     <see cref="Error" /> value.
     /// </returns>
     public Result<TMap, TError> And<TMap>(Result<TMap, TError> result)
+        where TMap : notnull
         => this is Error error ? new Result<TMap, TError>.Error(error.Value) : result;
 
     /// <summary>
@@ -157,7 +161,8 @@ public abstract record Result<T, TError> : Result
     /// <param name="fn">The bound function to the current result.</param>
     /// <typeparam name="TMap">The type of result returned by bound function.</typeparam>
     /// <returns>The result of the bound function if <see cref="Ok" />, same error in case of <see cref="Error" />.</returns>
-    public Result<TMap, TError> AndThen<TMap>(Func<T, Result<TMap, TError>> fn) => this switch
+    public Result<TMap, TError> AndThen<TMap>(Func<T, Result<TMap, TError>> fn)
+        where TMap : notnull => this switch
     {
         Ok ok => fn(ok.Value),
         Error error => new Result<TMap, TError>.Error(error.Value),
@@ -190,13 +195,13 @@ public abstract record Result<T, TError> : Result
     ///     </code>
     /// </example>
     /// <param name="result">The result returned in case of <see cref="Error" />.</param>
-    /// <typeparam name="TMap">The type of the returned error.</typeparam>
+    /// <typeparam name="TMapError">The type of the returned error.</typeparam>
     /// <returns>
     ///     Returns <paramref name="result" /> if the result is <see cref="Error" />, otherwise returns the
     ///     <see cref="Ok" /> value.
     /// </returns>
-    public Result<T, TMap> Or<TMap>(Result<T, TMap> result)
-        where TMap : notnull => this is Ok ok ? new Result<T, TMap>.Ok(ok.Value) : result;
+    public Result<T, TMapError> Or<TMapError>(Result<T, TMapError> result)
+        where TMapError : notnull => this is Ok ok ? new Result<T, TMapError>.Ok(ok.Value) : result;
 
     /// <summary>
     ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error" />.
@@ -214,13 +219,13 @@ public abstract record Result<T, TError> : Result
     ///     </code>
     /// </example>
     /// <param name="op">The bound function that handles the error result and return a new result.</param>
-    /// <typeparam name="TMap">Type of the mapped error by the bound function.</typeparam>
+    /// <typeparam name="TMapError">Type of the mapped error by the bound function.</typeparam>
     /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok" /> value.</returns>
-    public Result<T, TMap> OrElse<TMap>(Func<TError, Result<T, TMap>> op)
-        where TMap : notnull
+    public Result<T, TMapError> OrElse<TMapError>(Func<TError, Result<T, TMapError>> op)
+        where TMapError : notnull
         => this switch
         {
-            Ok ok => new Result<T, TMap>.Ok(ok.Value),
+            Ok ok => new Result<T, TMapError>.Ok(ok.Value),
             Error error => op(error.Value),
         };
 
@@ -277,7 +282,8 @@ public abstract record Result<T, TError> : Result
     ///     A new result value containing the mapped value, or the same containing the underlying
     ///     error in case of <see cref="Error" />.
     /// </returns>
-    public Result<TMap, TError> Map<TMap>(Func<T, TMap> map) => this switch
+    public Result<TMap, TError> Map<TMap>(Func<T, TMap> map)
+        where TMap : notnull => this switch
     {
         Ok ok => new Result<TMap, TError>.Ok(map(ok.Value)),
         Error error => new Result<TMap, TError>.Error(error.Value),
@@ -324,7 +330,7 @@ public abstract record Result<T, TError> : Result
     };
 
     /// <summary>
-    ///     Maps an underlying error value to <typeparamref name="TMap" /> by applying the given function to a contained
+    ///     Maps an underlying error value to <typeparamref name="TMapError" /> by applying the given function to a contained
     ///     <see cref="Error" /> value, leaving an <see cref="Ok" /> value untouched.
     ///     This function can be used to pass through a successful result while handling an error.
     /// </summary>
@@ -340,14 +346,163 @@ public abstract record Result<T, TError> : Result
     ///     </code>
     /// </example>
     /// <param name="map">The function used to map the error.</param>
-    /// <typeparam name="TMap">Type of the returning error.</typeparam>
-    public Result<T, TMap> MapError<TMap>(Func<TError, TMap> map)
-        where TMap : notnull
+    /// <typeparam name="TMapError">Type of the returning error.</typeparam>
+    public Result<T, TMapError> MapError<TMapError>(Func<TError, TMapError> map)
+        where TMapError : notnull
         => this switch
         {
-            Ok ok => new Result<T, TMap>.Ok(ok.Value),
-            Error error => new Result<T, TMap>.Error(map(error.Value)),
+            Ok ok => new Result<T, TMapError>.Ok(ok.Value),
+            Error error => new Result<T, TMapError>.Error(map(error.Value)),
         };
+
+    /// <summary>
+    ///     Returns the contained <see cref="Ok" /> value.
+    ///     Because this function may throw an exception, its use is discouraged. Exceptions are meant for unrecoverable
+    ///     errors, and may abort the entire program.
+    ///     Instead, prefer to use <see cref="UnwrapOr" />, <see cref="UnwrapOrElse" />, or <see cref="UnwrapOrDefault" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(2);
+    ///     Assert.Equal(2, result);
+    ///
+    ///     result = Result.Error("emergency failure");
+    ///     Assert.Throws&lt;InvalidOperationException&gt;(() => result.Unwrap());
+    ///     </code>
+    /// </example>
+    /// <exception cref="InvalidOperationException">
+    ///     In case the result is <see cref="Error" /> with the contained error as message.
+    /// </exception>
+    public T Unwrap() => Unwrap(static e => new InvalidOperationException(e.ToString()));
+
+    /// <summary>
+    ///     Returns the contained <see cref="Ok" /> value or throw an exception build by given <paramref name="fn" /> function.
+    ///     Because this function may throw an exception, its use is discouraged. Exceptions are meant for unrecoverable
+    ///     errors, and may abort the entire program.
+    ///     Instead, prefer to use <see cref="UnwrapOr" />, <see cref="UnwrapOrElse" />, or <see cref="UnwrapOrDefault" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(2);
+    ///     Assert.Equal(2, result);
+    ///
+    ///     result = Result.Error("emergency failure");
+    ///     Assert.Throws&lt;ApplicationException&gt;(() => result.Unwrap&lt;ApplicationException&gt;
+    ///             (e => new
+    ///             ApplicationException($"Error received: {e}")));
+    ///     </code>
+    /// </example>
+    /// <param name="fn">The function that builds an exception from contained error.</param>
+    /// <typeparam name="TException">Type of the thrown exception in case of <see cref="Error" />.</typeparam>
+    /// <exception cref="Exception">The exception build by <paramref name="fn" /> from contained error.</exception>
+    public T Unwrap<TException>(Func<TError, TException> fn)
+        where TException : Exception => this switch
+    {
+        Ok ok => ok.Value,
+        Error error => throw fn(error.Value),
+    };
+
+    /// <summary>
+    ///     Returns the contained <see cref="Error" /> value or throw an exception containing the <see cref="Ok" /> value.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(2);
+    ///     var exception = Assert.Throws&lt;InvalidOperationException%gt;(() => result.UnwrapError());
+    ///     Assert.Equal("2", exception.Message);
+    ///
+    ///     result = Result.Error("emergency failure");
+    ///     Assert.Equal("emergency failure", result.UnwrapError());
+    ///     </code>
+    /// </example>
+    /// <exception cref="InvalidOperationException">An exception containing the <see cref="Ok" /> value as message.</exception>
+    public TError UnwrapError() => UnwrapError(static x => new InvalidOperationException(x.ToString()));
+
+    /// <summary>
+    ///     Returns the contained <see cref="Error" /> value or throw an exception containing the <see cref="Ok" /> value.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(2);
+    ///     var exception = Assert.Throws&lt;ApplicationException%gt;(
+    ///         () => result.UnwrapError&lt;ApplicationException&gt;(
+    ///             x => new ApplicationException($"Unexpected OK: {x}")));
+    ///     Assert.Equal("Unexpected OK: 2", exception.Message);
+    ///
+    ///     result = Result.Error("emergency failure");
+    ///     Assert.Equal("emergency failure", result.UnwrapError());
+    ///     </code>
+    /// </example>
+    /// <exception cref="Exception">
+    ///     Throws an exception of type <typeparamref name="TException" /> in case of <see cref="Ok" />
+    ///     .
+    /// </exception>
+    public TError UnwrapError<TException>(Func<T, TException> fn)
+        where TException : Exception => this switch
+    {
+        Ok ok => throw fn(ok.Value),
+        Error error => error.Value,
+    };
+
+    /// <summary>
+    ///     Returns the contained <see cref="Ok" /> value or a provided value.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Result&lt;int, string&gt; result = Result.Ok(9);
+    ///     Assert.Equal(9, result.UnwrapOr(2));
+    ///
+    ///     result = Result.Error("error");
+    ///     Assert.Equal(2, result.UnwrapOr(2));
+    ///     </code>
+    /// </example>
+    /// <param name="default">The value returned in case of <see cref="Error" />.</param>
+    public T UnwrapOr(T @default) => this is Ok ok ? ok.Value : @default;
+
+    /// <summary>
+    ///     Returns the <see cref="Ok" /> value. If <see cref="Error" />, then it returns the <b>default</b> of
+    ///     <typeparamref name="T" />.
+    /// </summary>
+    /// <remarks>
+    ///     Take in account that, although <typeparamref name="T" /> is defined as <b>notnull</b>, this method can return
+    ///     <b>null</b> when <typeparamref name="T" /> is a reference type.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Func&lt;string, Result&lt;int, string&gt;&gt; parse =
+    ///         x => int.TryParse(x, out var r) ? Result.Ok(r) : Result.Error($"Cannot parse to int: {x}");
+    ///
+    ///     Assert.Equal(1909, parse("1909").UnwrapOrDefault());
+    ///     Assert.Equal(0, parse("1909blarg"));
+    ///     </code>
+    /// </example>
+    public T? UnwrapOrDefault() => this is Ok ok ? ok.Value : default;
+
+    /// <summary>
+    ///     Returns the <see cref="Ok" /> value or computes it from a function in case of <see cref="Error" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Function&lt;string, int&gt; count = x => x.Length;
+    ///
+    ///     Result&lt;int, string&gt; result = Result.Ok(2);
+    ///     Assert.Equal(2, result.UnwrapOrElse(count));
+    ///
+    ///     result = Result.Error("foo");
+    ///     Assert.Equal(3, result.UnwrapOrElse(count));
+    ///     </code>
+    /// </example>
+    /// <param name="op">The function that computes an optional value by taking the error.</param>
+    public T UnwrapOrElse(Func<TError, T> op) => this switch
+    {
+        Ok ok => ok.Value,
+        Error error => op(error.Value),
+    };
+
+    /// <summary>
+    ///     Disregard properties on compiler generated record.
+    /// </summary>
+    protected virtual bool PrintMembers(StringBuilder builder) => false;
 
     /// <summary>
     ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
@@ -356,20 +511,16 @@ public abstract record Result<T, TError> : Result
     public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
 
     /// <summary>
+    ///     Converts the given ERROR value into the <see cref="Result{T,TError}.Error" /> variant that contains the underlying
+    ///     error value.
     /// </summary>
-    /// <param name="error"></param>
-    /// <returns></returns>
     public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) => new Error(error.Value);
 
     /// <summary>
     ///     Represents the successful result of an operation, containing a value of the specified type.
     /// </summary>
     /// <param name="Value">The underlying successful value.</param>
-    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>
-    {
-        /// <inheritdoc />
-        public override string ToString() => $"Ok {{ Value = {Value} }}";
-    }
+    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>;
 
     /// <summary>
     ///     Represents a failed result containing error information of the specified type.
@@ -382,11 +533,7 @@ public abstract record Result<T, TError> : Result
     ///     The underlying failure value.
     ///     Cannot be null if the error type is a reference type.
     /// </param>
-    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>
-    {
-        /// <inheritdoc />
-        public override string ToString() => $"Error {{ Value = {Value} }}";
-    }
+    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
 
     #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 }

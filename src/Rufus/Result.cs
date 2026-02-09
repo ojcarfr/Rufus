@@ -15,6 +15,7 @@ public interface Result
     /// </summary>
     /// <typeparam name="T">Type of the success value.</typeparam>
     interface Ok<out T> : Result
+        where T : notnull
     {
         /// <summary>
         ///     Gets the success value.
@@ -27,6 +28,7 @@ public interface Result
     /// </summary>
     /// <typeparam name="TError">Type of the error value.</typeparam>
     interface Error<out TError> : Result
+        where TError : notnull
     {
         /// <summary>
         ///     Gets the error value.

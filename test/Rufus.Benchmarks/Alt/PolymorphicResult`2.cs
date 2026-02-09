@@ -2,6 +2,7 @@
 
 public abstract record PolymorphicResult<T, TError>
     where TError : notnull
+    where T : notnull
 {
     private PolymorphicResult() { }
 
@@ -17,7 +18,8 @@ public abstract record PolymorphicResult<T, TError>
 
     public abstract PolymorphicResult<T, TError> InspectError(Action<TError> fn);
 
-    public abstract PolymorphicResult<TMap, TError> Map<TMap>(Func<T, TMap> map);
+    public abstract PolymorphicResult<TMap, TError> Map<TMap>(Func<T, TMap> map)
+        where TMap : notnull;
 
     public abstract TMap MapOr<TMap>(Func<T, TMap> map, TMap @default);
 

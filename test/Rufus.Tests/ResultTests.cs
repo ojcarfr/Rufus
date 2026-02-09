@@ -1,5 +1,7 @@
 namespace Rufus.Tests;
 
+using NSubstitute.ExceptionExtensions;
+
 public class ResultTests
 {
     [Fact]
@@ -358,5 +360,165 @@ public class ResultTests
         Result<string, int> result = sut.Flatten();
 
         Assert.Equal(Result.Error(6), result);
+    }
+
+    [Fact]
+    public void GivenAnyOkResult_WhenUnwrap_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(2);
+
+        int result = sut.Unwrap();
+
+        Assert.Equal(2, result);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResult_WhenUnwrap_ThenShouldThrowAnInvalidException()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+
+        InvalidOperationException thrownException = Assert.Throws<InvalidOperationException>(() => sut.Unwrap());
+
+        Assert.Equal("Expected error", thrownException.Message);
+    }
+
+    [Fact]
+    public void GivenAnyOkResultAndAnyExceptionFactory_WhenUnwrap_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(2);
+
+        int result = sut.Unwrap<ApplicationException>(_ => throw new ApplicationException("Disregarded"));
+
+        Assert.Equal(2, result);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResultAndAnyExceptionFactory_WhenUnwrap_ThenShouldThrowBuiltException()
+    {
+        var expectedException = new ApplicationException("Thrown: Expected error");
+        Func<string, ApplicationException> exceptionFactory = Substitute.For<Func<string, ApplicationException>>();
+        exceptionFactory.Invoke(Arg.Any<string>()).Returns(expectedException);
+        Result<int, string> sut = Result.Error("Expected error");
+
+        ApplicationException receivedException =
+            Assert.Throws<ApplicationException>(() => sut.Unwrap(exceptionFactory));
+
+        Assert.Equal(expectedException, receivedException);
+        exceptionFactory.Received().Invoke("Expected error");
+    }
+
+    [Fact]
+    public void GivenAnyOkResult_WhenUnwrapError_ThenShouldThrowInvalidOperationException()
+    {
+        Result<int, string> sut = Result.Ok(2);
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => sut.UnwrapError());
+
+        Assert.Equal("2", exception.Message);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResult_WhenUnwrapError_ThenShouldReturnErrorValue()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+
+        string result = sut.UnwrapError();
+
+        Assert.Equal("Expected error", result);
+    }
+
+    [Fact]
+    public void GivenAnyOkResultAndAnyExceptionFactory_WhenUnwrapError_ThenShouldThrowExceptionBuiltByFactory()
+    {
+        var expectedException = new ApplicationException("Thrown: 2");
+        Result<int, string> sut = Result.Ok(2);
+        Func<int, ApplicationException> exceptionFactory = Substitute.For<Func<int, ApplicationException>>();
+        exceptionFactory.Invoke(2).Throws(expectedException);
+
+        ApplicationException exception = Assert.Throws<ApplicationException>(() => sut.UnwrapError(exceptionFactory));
+
+        Assert.Equal(expectedException, exception);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResultAndAnyExceptionFactory_WhenUnwrapError_ThenShouldReturnErrorValue()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+
+        string result = sut.UnwrapError<ApplicationException>(_ => new ApplicationException());
+
+        Assert.Equal("Expected error", result);
+    }
+
+    [Fact]
+    public void GivenAnyOkResultAndAnyDefaultValue_WhenUnwrapOr_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(9);
+
+        int result = sut.UnwrapOr(2);
+
+        Assert.Equal(9, result);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResultAndAnyDefaultValue_WhenUnwrapOr_ThenShouldReturnDefaultValue()
+    {
+        Result<int, string> sut = Result.Error("error");
+
+        int result = sut.UnwrapOr(2);
+
+        Assert.Equal(2, result);
+    }
+
+    [Fact]
+    public void GivenAnyOkResult_WhenUnwrapOrDefault_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(2);
+
+        int result = sut.UnwrapOrDefault();
+
+        Assert.Equal(2, result);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResultOfAnyReferenceType_WhenUnwrapOrDefault_ThenShouldReturnNull()
+    {
+        Result<object, string> sut = Result.Error("error");
+
+        object? result = sut.UnwrapOrDefault();
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResultOfAnyValueType_WhenUnwrapOrDefault_ThenShouldReturnDefaultValueType()
+    {
+        Result<int, string> sut = Result.Error("error");
+
+        int result = sut.UnwrapOrDefault();
+
+        Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public void GivenAnyOkResultAndAnyOptionalFunction_WhenUnwrapOrElse_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(2);
+
+        int result = sut.UnwrapOrElse(_ => int.MaxValue);
+
+        Assert.Equal(2, result);
+    }
+
+    [Fact]
+    public void GivenAnyErrorResultAndAnyOptionalFunction_WhenUnwrapOrElse_ThenShouldReturnOptionalFunctionResult()
+    {
+        Result<int, string> sut = Result.Error("Expected error");
+        Func<string, int> op = Substitute.For<Func<string, int>>();
+        op.Invoke("Expected error").Returns(int.MaxValue);
+
+        int result = sut.UnwrapOrElse(op);
+
+        Assert.Equal(int.MaxValue, result);
     }
 }
