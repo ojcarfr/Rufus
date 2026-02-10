@@ -137,7 +137,7 @@ csharp_space_after_dot = false
 csharp_space_after_semicolon_in_for_statement = true
 
 #use space after flow statements
-csharp_space_after_keywords_in_control_flow_statements = false
+csharp_space_after_keywords_in_control_flow_statements = true
 
 csharp_space_around_operators = before_and_after
 
@@ -775,8 +775,9 @@ csharp_wrap_after_invocation_lpar = false
 csharp_wrap_before_invocation_rpar = false
 
 # Arrangement of Member Access Expressions
-csharp_wrap_after_dot_in_method_calls = false
+csharp_wrap_after_dot_in_method_calls = true
 csharp_wrap_chained_method_calls = chop_if_long
+csharp_wrap_before_first_method_call = true
 
 # Arrangement of Binary Expressions
 csharp_wrap_before_binary_opsign = true

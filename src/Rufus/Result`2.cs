@@ -138,24 +138,24 @@ public abstract record Result<T, TError> : Result
     /// </summary>
     /// <example>
     ///     <code>
-    /// static Result&lt;string, string> SqThenToString(int value)
-    /// {
-    ///     checked
+    ///     static Result&lt;string, string> SqThenToString(int value)
     ///     {
-    ///         try
+    ///         checked
     ///         {
-    ///             return Result.Ok((value * value).ToString());
-    ///         }
-    ///         catch(OverflowException)
-    ///         {
-    ///             return Result.Error("overflowed");
+    ///             try
+    ///             {
+    ///                 return Result.Ok((value * value).ToString());
+    ///             }
+    ///             catch(OverflowException)
+    ///             {
+    ///                 return Result.Error("overflowed");
+    ///             }
     ///         }
     ///     }
-    /// }
     ///
-    /// Assert.Equal(Result.Ok(4.ToString()), Result.Ok(2).AndThen(SqThenToString));
-    /// Assert.Equal(Result.Error("overflowed"), Result.Ok(1_000_000).AndThen(SqThenToString));
-    /// Assert.Equal(Result.Error("not a number"), Result.Error("not a number").AndThen((int x) => SqThenToString(x)));
+    ///     Assert.Equal(Result.Ok(4.ToString()), Result.Ok(2).AndThen(SqThenToString));
+    ///     Assert.Equal(Result.Error("overflowed"), Result.Ok(1_000_000).AndThen(SqThenToString));
+    ///     Assert.Equal(Result.Error("not a number"), Result.Error("not a number").AndThen((int x) => SqThenToString(x)));
     ///     </code>
     /// </example>
     /// <param name="fn">The bound function to the current result.</param>
@@ -236,7 +236,7 @@ public abstract record Result<T, TError> : Result
     /// <returns>Returns the original result.</returns>
     public Result<T, TError> Inspect(Action<T> fn)
     {
-        if(this is Ok ok)
+        if (this is Ok ok)
         {
             fn(ok.Value);
         }
@@ -251,7 +251,7 @@ public abstract record Result<T, TError> : Result
     /// <returns>Returns the original result.</returns>
     public Result<T, TError> InspectError(Action<TError> fn)
     {
-        if(this is Error error)
+        if (this is Error error)
         {
             fn(error.Value);
         }
