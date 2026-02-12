@@ -27,8 +27,8 @@ public static class ResultSyntax
         where T : notnull
         => result switch
         {
-            Result<Result<T, TError>, TError>.Ok ok => ok.Value,
-            Result<Result<T, TError>, TError>.Error error => new Result<T, TError>.Error(error.Value),
+            Result<Result<T, TError>, TError>.Ok(var ok) => ok,
+            Result<Result<T, TError>, TError>.Error(var error) => new Result<T, TError>.Error(error),
             _ => throw new SwitchExpressionException(result),
         };
 

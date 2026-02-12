@@ -95,7 +95,7 @@ public abstract record Result<T, TError> : Result
     ///     <c>true</c> if the result is <see cref="Ok" /> and the underlying value inside of it
     ///     matches a predicate.
     /// </returns>
-    public bool IsOkAnd(Func<T, bool> predicate) => this is Ok ok && predicate(ok.Value);
+    public bool IsOkAnd(Func<T, bool> predicate) => this is Ok(var ok) && predicate(ok);
 
     /// <summary>
     ///     Returns a new result in case of <see cref="Ok" />.
@@ -131,7 +131,7 @@ public abstract record Result<T, TError> : Result
     /// </returns>
     public Result<TMap, TError> And<TMap>(Result<TMap, TError> result)
         where TMap : notnull
-        => this is Error error ? new Result<TMap, TError>.Error(error.Value) : result;
+        => this is Error(var error) ? new Result<TMap, TError>.Error(error) : result;
 
     /// <summary>
     ///     Binds <paramref name="fn" /> function to be executed if the result is <see cref="Ok" />.
@@ -164,8 +164,8 @@ public abstract record Result<T, TError> : Result
     public Result<TMap, TError> AndThen<TMap>(Func<T, Result<TMap, TError>> fn)
         where TMap : notnull => this switch
     {
-        Ok ok => fn(ok.Value),
-        Error error => new Result<TMap, TError>.Error(error.Value),
+        Ok(var ok) => fn(ok),
+        Error(var error) => new Result<TMap, TError>.Error(error),
     };
 
     /// <summary>
@@ -201,7 +201,7 @@ public abstract record Result<T, TError> : Result
     ///     <see cref="Ok" /> value.
     /// </returns>
     public Result<T, TMapError> Or<TMapError>(Result<T, TMapError> result)
-        where TMapError : notnull => this is Ok ok ? new Result<T, TMapError>.Ok(ok.Value) : result;
+        where TMapError : notnull => this is Ok(var ok) ? new Result<T, TMapError>.Ok(ok) : result;
 
     /// <summary>
     ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error" />.
@@ -225,8 +225,8 @@ public abstract record Result<T, TError> : Result
         where TMapError : notnull
         => this switch
         {
-            Ok ok => new Result<T, TMapError>.Ok(ok.Value),
-            Error error => op(error.Value),
+            Ok(var ok) => new Result<T, TMapError>.Ok(ok),
+            Error(var error) => op(error),
         };
 
     /// <summary>
@@ -236,9 +236,9 @@ public abstract record Result<T, TError> : Result
     /// <returns>Returns the original result.</returns>
     public Result<T, TError> Inspect(Action<T> fn)
     {
-        if (this is Ok ok)
+        if (this is Ok(var ok))
         {
-            fn(ok.Value);
+            fn(ok);
         }
 
         return this;
@@ -251,9 +251,9 @@ public abstract record Result<T, TError> : Result
     /// <returns>Returns the original result.</returns>
     public Result<T, TError> InspectError(Action<TError> fn)
     {
-        if (this is Error error)
+        if (this is Error(var error))
         {
-            fn(error.Value);
+            fn(error);
         }
 
         return this;
@@ -285,8 +285,8 @@ public abstract record Result<T, TError> : Result
     public Result<TMap, TError> Map<TMap>(Func<T, TMap> map)
         where TMap : notnull => this switch
     {
-        Ok ok => new Result<TMap, TError>.Ok(map(ok.Value)),
-        Error error => new Result<TMap, TError>.Error(error.Value),
+        Ok(var ok) => new Result<TMap, TError>.Ok(map(ok)),
+        Error(var error) => new Result<TMap, TError>.Error(error),
     };
 
     /// <summary>
@@ -311,7 +311,7 @@ public abstract record Result<T, TError> : Result
     /// <param name="map">The function used to map the success value.</param>
     /// <param name="default">The default value returned in case of <see cref="Error" />.</param>
     /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
-    public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) => this is Ok ok ? map(ok.Value) : @default;
+    public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) => this is Ok(var ok) ? map(ok) : @default;
 
     /// <summary>
     ///     Maps a <see cref="Result{T,TError}" /> to <typeparamref name="TMap" /> by applying fallback function
@@ -325,8 +325,8 @@ public abstract record Result<T, TError> : Result
     /// <returns>A new result value containing the mapped success value, or the fallback value in case of error.</returns>
     public TMap MapOrElse<TMap>(Func<T, TMap> map, Func<TError, TMap> fallback) => this switch
     {
-        Ok ok => map(ok.Value),
-        Error error => fallback(error.Value),
+        Ok(var ok) => map(ok),
+        Error(var error) => fallback(error),
     };
 
     /// <summary>
@@ -351,8 +351,8 @@ public abstract record Result<T, TError> : Result
         where TMapError : notnull
         => this switch
         {
-            Ok ok => new Result<T, TMapError>.Ok(ok.Value),
-            Error error => new Result<T, TMapError>.Error(map(error.Value)),
+            Ok(var ok) => new Result<T, TMapError>.Ok(ok),
+            Error(var error) => new Result<T, TMapError>.Error(map(error)),
         };
 
     /// <summary>
@@ -398,8 +398,8 @@ public abstract record Result<T, TError> : Result
     public T Unwrap<TException>(Func<TError, TException> fn)
         where TException : Exception => this switch
     {
-        Ok ok => ok.Value,
-        Error error => throw fn(error.Value),
+        Ok(var ok) => ok,
+        Error(var error) => throw fn(error),
     };
 
     /// <summary>
@@ -440,8 +440,8 @@ public abstract record Result<T, TError> : Result
     public TError UnwrapError<TException>(Func<T, TException> fn)
         where TException : Exception => this switch
     {
-        Ok ok => throw fn(ok.Value),
-        Error error => error.Value,
+        Ok(var ok) => throw fn(ok),
+        Error(var error) => error,
     };
 
     /// <summary>
@@ -457,7 +457,7 @@ public abstract record Result<T, TError> : Result
     ///     </code>
     /// </example>
     /// <param name="default">The value returned in case of <see cref="Error" />.</param>
-    public T UnwrapOr(T @default) => this is Ok ok ? ok.Value : @default;
+    public T UnwrapOr(T @default) => this is Ok(var ok) ? ok : @default;
 
     /// <summary>
     ///     Returns the <see cref="Ok" /> value. If <see cref="Error" />, then it returns the <b>default</b> of
@@ -476,7 +476,7 @@ public abstract record Result<T, TError> : Result
     ///     Assert.Equal(0, parse("1909blarg"));
     ///     </code>
     /// </example>
-    public T? UnwrapOrDefault() => this is Ok ok ? ok.Value : default;
+    public T? UnwrapOrDefault() => this is Ok(var ok) ? ok : default;
 
     /// <summary>
     ///     Returns the <see cref="Ok" /> value or computes it from a function in case of <see cref="Error" />.
@@ -495,8 +495,8 @@ public abstract record Result<T, TError> : Result
     /// <param name="op">The function that computes an optional value by taking the error.</param>
     public T UnwrapOrElse(Func<TError, T> op) => this switch
     {
-        Ok ok => ok.Value,
-        Error error => op(error.Value),
+        Ok(var ok) => ok,
+        Error(var error) => op(error),
     };
 
     /// <summary>
