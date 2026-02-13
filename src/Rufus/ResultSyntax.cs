@@ -39,6 +39,11 @@ public static class ResultSyntax
     extension(Result)
     {
         /// <summary>
+        ///     Returns a success results of a void operations, containing an unit value.
+        /// </summary>
+        public static OkValue<_> Ok() => new();
+
+        /// <summary>
         ///     Returns a success value containing the specified <paramref name="value" />.
         ///     This value type should be implicitly converted to a <see cref="Result{T, TError}" />.
         /// </summary>

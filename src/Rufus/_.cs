@@ -17,7 +17,8 @@ public readonly struct _ : IEquatable<_>
     public bool Equals(_ other) => true;
 
     /// <inheritdoc />
-    public override bool Equals([NotNullWhen(true)] object? obj) => obj is _;
+    // ReSharper disable once RedundantVerbatimPrefix
+    public override bool Equals([NotNullWhen(true)] object? obj) => obj is @_;
 
     /// <inheritdoc />
     public override int GetHashCode() => 0;
