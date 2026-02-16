@@ -82,3 +82,17 @@ According to benchmarks, the cost of matching to ```Result``` interface is almos
 |----------------------------------|---------:|----------:|----------:|------:|--------:|-------:|----------:|------------:|
 | 'Switch by generic Result type'  | 1.880 ns | 0.0619 ns | 0.1422 ns |  1.01 |    0.11 | 0.0029 |      24 B |        1.00 |
 | 'Switch by interface case types' | 1.986 ns | 0.0648 ns | 0.1849 ns |  1.06 |    0.13 | 0.0029 |      24 B |        1.00 |
+
+### Asynchronous support
+```Result<T, TError>``` defines ```AndThen``` and ```OrElse``` overloads in order to bind the two-path executions
+to asynchronous methods, so do it allows asynchronous promises to be bound to any other function piping the execution
+without awaiting them.
+
+> Any uncaught exception will be propagated to the first await sentence.
+
+Due to both ```Task``` and ```ValueTask``` are de-fact dotnet promise standards with its own benefits,
+overloads are defined to both of these types instead of creating a new AsyncResult primitive. In this way,
+when needed, you can take advantage of ValueTask freely.
+
+> When binding asynchronous promise, the implementation checks whether the promise were already finished,
+> returning a new promise without creating the state machine.

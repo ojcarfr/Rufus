@@ -26,7 +26,7 @@ public partial class AsyncResultTests
         ];
 
     [Fact]
-    public async Task GivenAnyErrorResultAndAnyAsyncTaskFunction_WhenAndThen_ThenShouldReturnError()
+    public async Task GivenAnyErrorResultAndAnyAsyncTaskFunction_WhenAndThen_ThenShouldReturnErrorValue()
     {
         Result<int, string> sut = Result.Error(EXPECTED_ERROR);
         var fn = Substitute.For<Func<int, Task<Result<string, string>>>>();
@@ -38,7 +38,20 @@ public partial class AsyncResultTests
     }
 
     [Fact]
-    public async Task GivenAnyErrorResultAndAnyAsyncValueTaskFunction_WhenAndThen_ThenShouldReturnError()
+    public async Task GivenAnyErrorResultAndAnyAsyncTaskFunction_WhenOrElse_ThenShouldReturnResultFromFunction()
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Result<int, string> sut = Result.Error(EXPECTED_ERROR);
+        var fn = Substitute.For<Func<string, Task<Result<int, int>>>>();
+        fn.Invoke(EXPECTED_ERROR).Returns(expected);
+
+        Result<int, int> result = await sut.OrElse(fn);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task GivenAnyErrorResultAndAnyAsyncValueTaskFunction_WhenAndThen_ThenShouldReturnErrorValue()
     {
         Result<int, string> sut = Result.Error(EXPECTED_ERROR);
         var fn = Substitute.For<Func<int, ValueTask<Result<string, string>>>>();
@@ -47,30 +60,67 @@ public partial class AsyncResultTests
 
         Assert.Equal(Result.Error(EXPECTED_ERROR), result);
         await fn.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task GivenAnyErrorResultAndAnyAsyncValueTaskFunction_WhenOrElse_ThenShouldReturnResultFromFunction()
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Result<int, string> sut = Result.Error(EXPECTED_ERROR);
+        var fn = Substitute.For<Func<string, ValueTask<Result<int, int>>>>();
+        fn.Invoke(EXPECTED_ERROR).Returns(expected);
+
+        Result<int, int> result = await sut.OrElse(fn);
+
+        Assert.Equal(expected, result);
     }
 
     [Fact]
     public async Task GivenAnyOkResultAndAnyAsyncTaskFunction_WhenAndThen_ThenShouldReturnResultFromFunction()
     {
-        Result<int, string> sut = Result.Ok(2);
+        Result<int, string> sut = Result.Ok(OK_VALUE);
         var fn = Substitute.For<Func<int, Task<Result<string, string>>>>();
-        fn.Invoke(OK_VALUE).Returns(Result.Ok("OK"));
+        fn.Invoke(OK_VALUE).Returns(Result.Error(EXPECTED_ERROR));
 
         Result<string, string> result = await sut.AndThen(fn);
 
-        Assert.Equal(Result.Ok("OK"), result);
+        Assert.Equal(Result.Error(EXPECTED_ERROR), result);
+    }
+
+    [Fact]
+    public async Task GivenAnyOkResultAndAnyAsyncTaskFunction_WhenOrElse_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(OK_VALUE);
+        var fn = Substitute.For<Func<string, Task<Result<int, int>>>>();
+
+        Result<int, int> result = await sut.OrElse(fn);
+
+        Assert.Equal(Result.Ok(OK_VALUE), result);
+        await fn.DidNotReceive().Invoke(Arg.Any<string>());
     }
 
     [Fact]
     public async Task GivenAnyOkResultAndAnyAsyncValueTaskFunction_WhenAndThen_ThenShouldReturnResultFromFunction()
     {
-        Result<int, string> sut = Result.Ok(2);
+        Result<int, string> sut = Result.Ok(OK_VALUE);
         var fn = Substitute.For<Func<int, ValueTask<Result<string, string>>>>();
-        fn.Invoke(OK_VALUE).Returns(Result.Ok("OK"));
+        fn.Invoke(OK_VALUE).Returns(Result.Error(EXPECTED_ERROR));
 
         Result<string, string> result = await sut.AndThen(fn);
 
-        Assert.Equal(Result.Ok("OK"), result);
+        Assert.Equal(Result.Error(EXPECTED_ERROR), result);
+    }
+
+    [Fact]
+    public async Task GivenAnyOkResultAndAnyAsyncValueTaskFunction_WhenOrElse_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(OK_VALUE);
+        var fn = Substitute.For<Func<string, ValueTask<Result<int, int>>>>();
+
+        Result<int, int> result = await sut.OrElse(fn);
+
+        Assert.Equal(Result.Ok(OK_VALUE), result);
+        await fn.DidNotReceive().Invoke(Arg.Any<string>());
     }
 
     public abstract class Promise<T, TError>

@@ -8,7 +8,7 @@ public partial class AsyncResultTests
     #pragma warning disable xUnit1045
     [MemberData(nameof(ErrorPromises))]
     #pragma warning restore xUnit1045
-    public async Task GivenAnyErrorTaskAndAnyAsyncTaskFunction_WhenAndThenOnTask_ThenShouldReturnError(
+    public async Task GivenAnyErrorTaskAndAnyAsyncTaskFunction_WhenAndThen_ThenShouldReturnError(
         Promise<int, string> promise)
     {
         Task<Result<int, string>> sut = promise.AsTask();
@@ -25,7 +25,25 @@ public partial class AsyncResultTests
     #pragma warning disable xUnit1045
     [MemberData(nameof(ErrorPromises))]
     #pragma warning restore xUnit1045
-    public async Task GivenAnyErrorTaskAndAnyAsyncValueTaskFunction_WhenAndThenOnTask_ThenShouldReturnError(
+    public async Task GivenAnyErrorTaskAndAnyAsyncTaskFunction_WhenOrElse_ThenShouldReturnResultFromFunction(
+        Promise<int, string> promise)
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, Task<Result<int, int>>>>();
+        fn.Invoke(EXPECTED_ERROR).Returns(expected);
+
+        Task<Result<int, int>> result = sut.OrElse(fn);
+        promise.Ready();
+
+        Assert.Equal(expected, await result);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(ErrorPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyErrorTaskAndAnyAsyncValueTaskFunction_WhenAndThen_ThenShouldReturnError(
         Promise<int, string> promise)
     {
         Task<Result<int, string>> sut = promise.AsTask();
@@ -42,8 +60,88 @@ public partial class AsyncResultTests
     #pragma warning disable xUnit1045
     [MemberData(nameof(ErrorPromises))]
     #pragma warning restore xUnit1045
-    public async Task GivenAnyErrorTaskAndAnyFunction_WhenAndThenOnTask_ThenShouldReturnError(
+    public async Task GivenAnyErrorTaskAndAnyAsyncValueTaskFunction_WhenOrElse_ThenShouldReturnResultFromFunction(
         Promise<int, string> promise)
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, ValueTask<Result<int, int>>>>();
+        fn.Invoke(EXPECTED_ERROR).Returns(expected);
+
+        ValueTask<Result<int, int>> result = sut.OrElse(fn);
+        promise.Ready();
+
+        Assert.Equal(expected, await result);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(ErrorPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyErrorTaskAndAnyFailingAsyncTaskFunction_WhenOrElse_ThenShouldThrowException(
+        Promise<int, string> promise)
+    {
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, Task<Result<int, int>>>>();
+        fn.Invoke(EXPECTED_ERROR).ThrowsAsync(ExpectedException);
+
+        var thrown = await Assert.ThrowsAsync<ApplicationException>(async () =>
+        {
+            Task<Result<int, int>> t = sut.OrElse(fn);
+            promise.Ready();
+            await t;
+        });
+
+        Assert.Equal(ExpectedException, thrown);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(ErrorPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyErrorTaskAndAnyFailingAsyncValueTaskFunction_WhenOrElse_ThenShouldThrowException(
+        Promise<int, string> promise)
+    {
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, ValueTask<Result<int, int>>>>();
+        fn.Invoke(EXPECTED_ERROR).ThrowsAsync(ExpectedException);
+
+        var thrown = await Assert.ThrowsAsync<ApplicationException>(async () =>
+        {
+            ValueTask<Result<int, int>> t = sut.OrElse(fn);
+            promise.Ready();
+            await t;
+        });
+
+        Assert.Equal(ExpectedException, thrown);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(ErrorPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyErrorTaskAndAnyFailingFunction_WhenOrElse_ThenShouldThrowException(
+        Promise<int, string> promise)
+    {
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, Result<int, int>>>();
+        fn.Invoke(EXPECTED_ERROR).Throws(ExpectedException);
+
+        var thrown = await Assert.ThrowsAsync<ApplicationException>(async () =>
+        {
+            Task<Result<int, int>> t = sut.OrElse(fn);
+            promise.Ready();
+            await t;
+        });
+
+        Assert.Equal(ExpectedException, thrown);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(ErrorPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyErrorTaskAndAnyFunction_WhenAndThen_ThenShouldReturnError(Promise<int, string> promise)
     {
         Task<Result<int, string>> sut = promise.AsTask();
         var fn = Substitute.For<Func<int, Result<string, string>>>();
@@ -53,6 +151,24 @@ public partial class AsyncResultTests
 
         Assert.Equal(Result.Error("Expected error"), await result);
         fn.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(ErrorPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyErrorTaskAndAnyFunction_WhenOrElse_ThenShouldReturnResultFromFunction(
+        Promise<int, string> promise)
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, Result<int, int>>>();
+        fn.Invoke(EXPECTED_ERROR).Returns(expected);
+
+        Task<Result<int, int>> result = sut.OrElse(fn);
+        promise.Ready();
+
+        Assert.Equal(expected, await result);
     }
 
     [Theory]
@@ -68,6 +184,26 @@ public partial class AsyncResultTests
         var thrown = await Assert.ThrowsAsync<ApplicationException>(async () =>
         {
             Task<Result<int, string>> task = sut.AndThen(fn);
+            promise.Ready();
+            await task;
+        });
+
+        Assert.Equal(ExpectedException, thrown);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(FaultedPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyFaultedTaskAndAnyAsyncTaskFunction_WhenOrElse_ThenShouldThrowException(
+        Promise<int, string> promise)
+    {
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, Task<Result<int, int>>>>();
+
+        var thrown = await Assert.ThrowsAsync<ApplicationException>(async () =>
+        {
+            Task<Result<int, int>> task = sut.OrElse(fn);
             promise.Ready();
             await task;
         });
@@ -99,6 +235,26 @@ public partial class AsyncResultTests
     #pragma warning disable xUnit1045
     [MemberData(nameof(FaultedPromises))]
     #pragma warning restore xUnit1045
+    public async Task GivenAnyFaultedTaskAndAnyAsyncValueTaskFunction_WhenOrElse_ThenShouldThrowException(
+        Promise<int, string> promise)
+    {
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, ValueTask<Result<int, int>>>>();
+
+        var thrown = await Assert.ThrowsAsync<ApplicationException>(async () =>
+        {
+            ValueTask<Result<int, int>> task = sut.OrElse(fn);
+            promise.Ready();
+            await task;
+        });
+
+        Assert.Equal(ExpectedException, thrown);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(FaultedPromises))]
+    #pragma warning restore xUnit1045
     public async Task GivenAnyFaultedTaskAndAnyFunction_WhenAndThen_ThenShouldThrowException(
         Promise<int, string> promise)
     {
@@ -108,6 +264,26 @@ public partial class AsyncResultTests
         var thrown = await Assert.ThrowsAsync<ApplicationException>(async () =>
         {
             Task<Result<int, string>> task = sut.AndThen(fn);
+            promise.Ready();
+            await task;
+        });
+
+        Assert.Equal(ExpectedException, thrown);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(FaultedPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyFaultedTaskAndAnyFunction_WhenOrElse_ThenShouldThrowException(
+        Promise<int, string> promise)
+    {
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, Result<int, int>>>();
+
+        var thrown = await Assert.ThrowsAsync<ApplicationException>(async () =>
+        {
+            Task<Result<int, int>> task = sut.OrElse(fn);
             promise.Ready();
             await task;
         });
@@ -138,6 +314,24 @@ public partial class AsyncResultTests
     #pragma warning disable xUnit1045
     [MemberData(nameof(SucceedPromises))]
     #pragma warning restore xUnit1045
+    public async Task GivenAnyOkTaskAndAnyAsyncTaskFunction_WhenOrElse_ThenShouldReturnOkValue(
+        Promise<int, string> promise)
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, Task<Result<int, int>>>>();
+
+        Task<Result<int, int>> task = sut.OrElse(fn);
+        promise.Ready();
+        Result<int, int> result = await task;
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(SucceedPromises))]
+    #pragma warning restore xUnit1045
     public async Task GivenAnyOkTaskAndAnyAsyncValueTaskFunction_WhenAndThen_ThenShouldReturnResultFromFunction(
         Promise<int, string> promise)
     {
@@ -151,6 +345,24 @@ public partial class AsyncResultTests
         ValueTask<Result<string, string>> task = sut.AndThen(fn);
         promise.Ready();
         Result<string, string> result = await task;
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(SucceedPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyOkTaskAndAnyAsyncValueTaskFunction_WhenOrElse_ThenShouldReturnOkValue(
+        Promise<int, string> promise)
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, ValueTask<Result<int, int>>>>();
+
+        ValueTask<Result<int, int>> task = sut.OrElse(fn);
+        promise.Ready();
+        Result<int, int> result = await task;
 
         Assert.Equal(expected, result);
     }
@@ -233,6 +445,23 @@ public partial class AsyncResultTests
         Task<Result<string, string>> task = sut.AndThen(fn);
         promise.Ready();
         Result<string, string> result = await task;
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    #pragma warning disable xUnit1045
+    [MemberData(nameof(SucceedPromises))]
+    #pragma warning restore xUnit1045
+    public async Task GivenAnyOkTaskAndAnyFunction_WhenOrElse_ThenShouldReturnOkValue(Promise<int, string> promise)
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Task<Result<int, string>> sut = promise.AsTask();
+        var fn = Substitute.For<Func<string, Result<int, int>>>();
+
+        Task<Result<int, int>> task = sut.OrElse(fn);
+        promise.Ready();
+        Result<int, int> result = await task;
 
         Assert.Equal(expected, result);
     }
