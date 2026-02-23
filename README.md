@@ -66,10 +66,10 @@ match the generic result type.
 
 ```csharp
 Result<int, string> result = Result.Ok(42);
-bool isSuccess = result.Switch(
+bool isSuccess = result switch {
     Result<int, string>.Ok => true,
-    Result<int, string>.Error => false
-);
+    Result<int, string>.Error => false,
+};
 assert.True(isSuccess);
 ```
 
@@ -84,6 +84,7 @@ According to benchmarks, the cost of matching to ```Result``` interface is almos
 | 'Switch by interface case types' | 1.986 ns | 0.0648 ns | 0.1849 ns |  1.06 |    0.13 | 0.0029 |      24 B |        1.00 |
 
 ### Asynchronous support
+
 ```Result<T, TError>``` defines ```AndThen``` and ```OrElse``` overloads in order to bind the two-path executions
 to asynchronous methods, so do it allows asynchronous promises to be bound to any other function piping the execution
 without awaiting them.

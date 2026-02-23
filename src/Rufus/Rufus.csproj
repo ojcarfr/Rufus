@@ -5,10 +5,23 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <Authors>ojcarfr@gmail.com</Authors>
+        <PackageIcon>shinkansen.png</PackageIcon>
+        <RepositoryUrl>https://github.com/ojcarfr/Rufus</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <Description>Railway Oriented Programming primitives implementation for C# inspired in Rust types.</Description>
+        <PackageTags>RUP union result</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="Rufus.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="shinkansen.png">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
     </ItemGroup>
 
 </Project>
