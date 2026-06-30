@@ -1,4 +1,4 @@
-﻿namespace Rufus;
+﻿namespace System;
 
 /// <summary>
 ///     Syntax methods to bind asynchronous results to a type, such as <see cref="Task{TResult}" /> or

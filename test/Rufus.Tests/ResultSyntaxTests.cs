@@ -1,4 +1,4 @@
-﻿namespace Rufus.Tests;
+namespace Rufus.Tests;
 
 public class ResultSyntaxTests
 {

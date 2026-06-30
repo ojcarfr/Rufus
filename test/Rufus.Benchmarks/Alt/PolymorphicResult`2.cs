@@ -1,4 +1,4 @@
-﻿namespace Rufus.Benchmarks.Alt;
+namespace Rufus.Benchmarks.Alt;
 
 public abstract record PolymorphicResult<T, TError>
     where TError : notnull

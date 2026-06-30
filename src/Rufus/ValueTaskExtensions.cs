@@ -1,4 +1,4 @@
-﻿namespace Rufus;
+﻿namespace System;
 
 /// <summary>
 ///     Extension methods of <see cref="ValueTask{TResult}" /> promises returning any <see cref="Result{T,TError}" />.

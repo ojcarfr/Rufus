@@ -1,4 +1,4 @@
-namespace Rufus;
+namespace System;
 
 #pragma warning disable IDE1006 // Naming Styles
 // ReSharper disable InconsistentNaming

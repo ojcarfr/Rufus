@@ -1,4 +1,4 @@
-namespace Rufus;
+namespace System;
 
 using System.Text;
 

@@ -11,10 +11,11 @@
         <RepositoryType>git</RepositoryType>
         <Description>Railway Oriented Programming primitives implementation for C# inspired in Rust types.</Description>
         <PackageTags>RUP union result</PackageTags>
+        <RootNamespace>System</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="Rufus.Tests"/>
+        <InternalsVisibleTo Include="Rufus.Tests" />
     </ItemGroup>
 
     <ItemGroup>
