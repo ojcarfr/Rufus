@@ -36,14 +36,14 @@ reference ``Result<T, TError>`` type.
 
 ### Pattern matching expressions
 
-Generic result type implements either ``Result.Ok`` or ``Result.Error`` case to perform
-switch less verbose by avoiding specifying both success and error types.
+Generic result type implements either ``Ok`` or ``Error`` case to perform less verbose switch by
+avoiding specifying both success and error types.
 
 ```csharp
 Result<int, string> result = Result.Ok(42);
 bool isSuccess = result.Switch(
-    Result.Ok<int> => true,
-    Result.Error<string> => false
+    Ok<int> => true,
+    Error<string> => false
 );
 Assert.True(isSuccess);
 ```
@@ -54,8 +54,8 @@ Relaying on the case interface type allows to match contravariant matches:
 Result<int, object> result = Result.Error("Expected error");
 bool matched = result switch
 {
-    Result.Error<Exception> => false,
-    Result.Error<string> => true,
+    Error<Exception> => false,
+    Error<string> => true,
     _ => false
 };
 Assert.True(matched);

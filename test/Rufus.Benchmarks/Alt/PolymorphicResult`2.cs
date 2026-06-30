@@ -33,7 +33,7 @@ public abstract record PolymorphicResult<T, TError>
     public static implicit operator PolymorphicResult<T, TError>(Result.Values.Error<TError> error)
         => new Error(error.Value);
 
-    public sealed record Ok(T Value) : PolymorphicResult<T, TError>, Result.Ok<T>
+    public sealed record Ok(T Value) : PolymorphicResult<T, TError>, Ok<T>
     {
         /// <inheritdoc />
         public override bool IsError => false;
@@ -71,7 +71,7 @@ public abstract record PolymorphicResult<T, TError>
             => new PolymorphicResult<T, TMap>.Ok(Value);
     }
 
-    public sealed record Error(TError Value) : PolymorphicResult<T, TError>, Result.Error<TError>
+    public sealed record Error(TError Value) : PolymorphicResult<T, TError>, Error<TError>
     {
         /// <inheritdoc />
         public override bool IsError => true;

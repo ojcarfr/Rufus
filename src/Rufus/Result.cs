@@ -1,9 +1,5 @@
-using static System.Result;
-
 namespace System;
 
-#pragma warning disable IDE1006 // Naming Styles
-// ReSharper disable InconsistentNaming
 /// <summary>
 ///     Defines the variant types of <see cref="Result{T, TError}" /> discriminator union.
 /// </summary>
@@ -13,40 +9,42 @@ namespace System;
 public static class Result
 {
     /// <summary>
-    ///     Contains the success value.
+    ///     Returns a success results of a void operations, containing an unit value.
     /// </summary>
-    /// <typeparam name="T">Type of the success value.</typeparam>
-    public interface Ok<T>
-        where T : notnull
-    {
-        /// <summary>
-        ///     Gets the success value.
-        /// </summary>
-        T Value { get; }
-
-        /// <summary>
-        ///     Deconstructs the success result into its underlying value.
-        /// </summary>
-        void Deconstruct(out T Value);
-    }
+    public static Values.Ok<_> Ok() => new();
 
     /// <summary>
-    ///     Contains the error value.
+    ///     Returns a success value containing the specified <paramref name="value" />.
+    ///     This value type should be implicitly converted to a <see cref="Result{T, TError}" />.
     /// </summary>
-    /// <typeparam name="TError">Type of the error value.</typeparam>
-    public interface Error<TError>
-        where TError : notnull
-    {
-        /// <summary>
-        ///     Gets the error value.
-        /// </summary>
-        TError Value { get; }
+    /// <example>
+    ///     <code>
+    ///     public static Result&lt;int, string> Divide(int numerator, int denominator) =>
+    ///         denominator switch
+    ///         {
+    ///             0 => Result.Error("Denominator cannot be zero."),
+    ///             _ => Result.Ok(numerator / denominator),
+    ///         };
+    ///     </code>
+    /// </example>
+    public static Values.Ok<T> Ok<T>(T value)
+        where T : notnull => new(value);
 
-        /// <summary>
-        ///     Deconstructs the error result into its underlying value.
-        /// </summary>
-        void Deconstruct(out TError Value);
-    }
+    /// <summary>
+    ///     Returns a failure value containing the specified <paramref name="value" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     public static Result&lt;int, string> Divide(int numerator, int denominator) =>
+    ///         denominator switch
+    ///         {
+    ///             0 => Result.Error("Denominator cannot be zero."),
+    ///             _ => Result.Ok(numerator / denominator),
+    ///         };
+    ///     </code>
+    /// </example>
+    public static Values.Error<TError> Error<TError>(TError value)
+        where TError : notnull => new(value);
 
     /// <summary>
     /// Defines default value type implementations of <see cref="Result{T, TError}"/> variants.
@@ -57,7 +55,7 @@ public static class Result
         ///     Value type to pass a success value that can be implicitly converted to a proper
         ///     <see cref="Result{T, TError}" /> by avoiding error generic type definition.
         /// </summary>
-        public readonly record struct Ok<T>(T Value) : Result.Ok<T>
+        public readonly record struct Ok<T>(T Value) : System.Ok<T>
             where T : notnull
         {
             /// <summary>
@@ -117,14 +115,14 @@ public static class Result
             /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok{T}" /> value.</returns>
             public Result<T, TMapError> OrElse<TError, TMapError>(Func<TError, Result<T, TMapError>> op)
                 where TError : notnull
-                where TMapError : notnull => Result.Ok(Value);
+                where TMapError : notnull => new Result<T, TMapError>.Ok(Value);
         }
 
         /// <summary>
         ///     Value type to pass an error value that can be implicitly converted to a proper
         ///     <see cref="Result{T, TError}" /> by avoiding success generic type definition.
         /// </summary>
-        public readonly record struct Error<TError>(TError Value) : Result.Error<TError>
+        public readonly record struct Error<TError>(TError Value) : System.Error<TError>
             where TError : notnull
         {
             /// <summary>
@@ -155,7 +153,7 @@ public static class Result
             /// <param name="_">The bound function to the current result.</param>
             /// <returns>The result of the bound function if <see cref="Ok{T}" />, same error in case of <see cref="Error{TError}" />.</returns>
             public Result<TMap, TError> AndThen<T, TMap>(Func<T, Result<TMap, TError>> _)
-                where TMap : notnull => Result.Error(Value);
+                where TMap : notnull => new Result<TMap, TError>.Error(Value);
 
             /// <summary>
             ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error{TError}" />.
@@ -183,5 +181,3 @@ public static class Result
         }
     }
 }
-// ReSharper restore InconsistentNaming
-#pragma warning restore IDE1006 // Naming Styles

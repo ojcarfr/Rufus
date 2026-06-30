@@ -2,6 +2,7 @@ namespace Rufus.Benchmarks.Benchmarks;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+
 using BenchmarkDotNet.Attributes;
 
 [SuppressMessage("Performance", "CA1822:Mark members as static")]
@@ -14,8 +15,8 @@ public class SwitchCase
 
         return result switch
         {
-            Result.Ok<int>(var value) => value,
-            Result.Error<string> => int.MaxValue,
+            Ok<int>(var value) => value,
+            Error<string> => int.MaxValue,
             _ => throw new SwitchExpressionException(),
         };
     }
