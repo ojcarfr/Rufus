@@ -15,7 +15,7 @@ using System.Text;
 /// </remarks>
 /// <typeparam name="T">Returned type on succeed paths.</typeparam>
 /// <typeparam name="TError">Returned type on failed paths.</typeparam>
-public abstract record Result<T, TError> : Result
+public abstract record Result<T, TError>
     where T : notnull
     where TError : notnull
 {

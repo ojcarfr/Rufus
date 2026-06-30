@@ -3,64 +3,6 @@ namespace Rufus.Tests;
 public class ResultSyntaxTests
 {
     [Fact]
-    public void GivenAnOkValue_WhenDeconstruct_ThenShouldAssignUnderlyingValue()
-    {
-        Result sut = Result.Ok(5);
-
-        if(sut is not Result.Ok<int>(var result))
-        {
-            Assert.Fail("Result is not OK");
-
-            return;
-        }
-
-        Assert.Equal(5, result);
-    }
-
-    [Fact]
-    public void GivenAnErrorValue_WhenDeconstruct_ThenShouldAssignUnderlyingValue()
-    {
-        Result sut = Result.Error("Expected error");
-
-        if(sut is not Result.Error<string>(var result))
-        {
-            Assert.Fail("Result is not Error");
-
-            return;
-        }
-
-        Assert.Equal("Expected error", result);
-    }
-
-    [Fact]
-    public void GivenAnOkValue_WhenSwitch_ThenShouldMatchCovariantUnderlyingValue()
-    {
-        Result sut = Result.Ok("OK");
-
-        object? result = sut switch
-        {
-            Result.Ok<object>(var value) => value,
-            _ => default,
-        };
-
-        Assert.Equal("OK", result);
-    }
-
-    [Fact]
-    public void GivenAnErrorValue_WhenSwitch_ThenShouldMatchCovariantUnderlyingValue()
-    {
-        Result sut = Result.Error("Expected error");
-
-        object? result = sut switch
-        {
-            Result.Error<object>(var value) => value,
-            _ => default,
-        };
-
-        Assert.Equal("Expected error", result);
-    }
-
-    [Fact]
     public void GivenAnOkValue_WhenCastToGenericResult_ThenShouldMatchOkValue()
     {
         Result<int, string> sut = Result.Ok(42);

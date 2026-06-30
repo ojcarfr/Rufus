@@ -3,18 +3,18 @@ namespace System;
 #pragma warning disable IDE1006 // Naming Styles
 // ReSharper disable InconsistentNaming
 /// <summary>
-///     Defines a type that represents either success () or failure ().
+///     Defines the variant types of <see cref="Result{T, TError}" /> discriminator union.
 /// </summary>
 /// <remarks>
 ///     This interface allows casing <see cref="Result{T, TError}" /> values in a less verbose way.
 /// </remarks>
-public interface Result
+public static class Result
 {
     /// <summary>
     ///     Contains the success value.
     /// </summary>
     /// <typeparam name="T">Type of the success value.</typeparam>
-    interface Ok<out T> : Result
+    public interface Ok<out T>
         where T : notnull
     {
         /// <summary>
@@ -27,7 +27,7 @@ public interface Result
     ///     Contains the error value.
     /// </summary>
     /// <typeparam name="TError">Type of the error value.</typeparam>
-    interface Error<out TError> : Result
+    public interface Error<out TError>
         where TError : notnull
     {
         /// <summary>
