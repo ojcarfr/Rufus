@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 /// <summary>
 ///     Defines the syntax for <see cref="Result" /> creation.
 /// </summary>
-public static class ResultSyntax
+public static partial class ResultSyntax
 {
     /// <summary>
     ///     Unnest any <see cref="Result{T,TError}" /> that returns any result else in case of <see cref="Ok" />.
@@ -75,23 +75,5 @@ public static class ResultSyntax
         /// </example>
         public static Result.Values.Error<TError> Error<TError>(TError value)
             where TError : notnull => new(value);
-    }
-
-    extension<T>(Result.Ok<T> ok)
-        where T : notnull
-    {
-        /// <summary>
-        ///     Deconstructs the success result into its underlying value.
-        /// </summary>
-        public void Deconstruct(out T value) => value = ok.Value;
-    }
-
-    extension<TError>(Result.Error<TError> error)
-        where TError : notnull
-    {
-        /// <summary>
-        ///     Deconstructs the error result into its underlying value.
-        /// </summary>
-        public void Deconstruct(out TError value) => value = error.Value;
     }
 }

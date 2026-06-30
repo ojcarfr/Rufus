@@ -16,26 +16,36 @@ public static class Result
     ///     Contains the success value.
     /// </summary>
     /// <typeparam name="T">Type of the success value.</typeparam>
-    public interface Ok<out T>
+    public interface Ok<T>
         where T : notnull
     {
         /// <summary>
         ///     Gets the success value.
         /// </summary>
         T Value { get; }
+
+        /// <summary>
+        ///     Deconstructs the success result into its underlying value.
+        /// </summary>
+        void Deconstruct(out T Value);
     }
 
     /// <summary>
     ///     Contains the error value.
     /// </summary>
     /// <typeparam name="TError">Type of the error value.</typeparam>
-    public interface Error<out TError>
+    public interface Error<TError>
         where TError : notnull
     {
         /// <summary>
         ///     Gets the error value.
         /// </summary>
         TError Value { get; }
+
+        /// <summary>
+        ///     Deconstructs the error result into its underlying value.
+        /// </summary>
+        void Deconstruct(out TError Value);
     }
 
     /// <summary>
