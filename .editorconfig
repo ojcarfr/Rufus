@@ -98,6 +98,9 @@ csharp_style_conditional_delegate_call = true:error
 #use code block preferences
 csharp_prefer_braces = true:warning
 
+# IDE0161: Convert to file-scoped namespace
+csharp_style_namespace_declarations = file_scoped:warning
+
 ###############################
 # .NET formatting settings    #
 ###############################
