@@ -317,7 +317,7 @@ public class ResultTests
     [Fact]
     public void GivenAnOkResultAndAnyBindableFunction_WhenOrElse_ThenBoundFunctionShouldNotBeInvoked()
     {
-        ResultSyntax.OkValue<int> expected = Result.Ok(2);
+        Result.Values.Ok<int> expected = Result.Ok(2);
         Result<int, int> sut = Result.Ok(expected.Value);
         Func<int, Result<int, string>>? op = Substitute.For<Func<int, Result<int, string>>>();
 
@@ -330,7 +330,7 @@ public class ResultTests
     [Fact]
     public void GivenAnErrorResultAndAnyBindableFunction_WhenOrElse_ThenBoundFunctionShouldBeInvoked()
     {
-        ResultSyntax.OkValue<int> expected = Result.Ok(50);
+        Result.Values.Ok<int> expected = Result.Ok(50);
         Result<int, int> sut = Result.Error(2);
         Func<int, Result<int, string>> op = Substitute.For<Func<int, Result<int, string>>>();
         op.Invoke(Arg.Any<int>()).Returns(expected);

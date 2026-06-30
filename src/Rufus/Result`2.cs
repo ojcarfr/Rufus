@@ -1,4 +1,4 @@
-namespace Rufus;
+namespace System;
 
 using System.Text;
 
@@ -15,13 +15,13 @@ using System.Text;
 /// </remarks>
 /// <typeparam name="T">Returned type on succeed paths.</typeparam>
 /// <typeparam name="TError">Returned type on failed paths.</typeparam>
-public abstract record Result<T, TError> : Result
+public abstract record Result<T, TError>
     where T : notnull
     where TError : notnull
 {
     private Result() { }
 
-    #pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+#pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 
     /// <summary>
     ///     Gets a value indicating whether the result is <see cref="Error" />.
@@ -163,10 +163,10 @@ public abstract record Result<T, TError> : Result
     /// <returns>The result of the bound function if <see cref="Ok" />, same error in case of <see cref="Error" />.</returns>
     public Result<TMap, TError> AndThen<TMap>(Func<T, Result<TMap, TError>> fn)
         where TMap : notnull => this switch
-    {
-        Ok(var ok) => fn(ok),
-        Error(var error) => new Result<TMap, TError>.Error(error),
-    };
+        {
+            Ok(var ok) => fn(ok),
+            Error(var error) => new Result<TMap, TError>.Error(error),
+        };
 
     /// <summary>
     ///     Returns the specified <paramref name="result" /> in case of <see cref="Error" />.
@@ -284,10 +284,10 @@ public abstract record Result<T, TError> : Result
     /// </returns>
     public Result<TMap, TError> Map<TMap>(Func<T, TMap> map)
         where TMap : notnull => this switch
-    {
-        Ok(var ok) => new Result<TMap, TError>.Ok(map(ok)),
-        Error(var error) => new Result<TMap, TError>.Error(error),
-    };
+        {
+            Ok(var ok) => new Result<TMap, TError>.Ok(map(ok)),
+            Error(var error) => new Result<TMap, TError>.Error(error),
+        };
 
     /// <summary>
     ///     Maps the underlying success value in case of <see cref="Ok" /> by applying the given map
@@ -397,10 +397,10 @@ public abstract record Result<T, TError> : Result
     /// <exception cref="Exception">The exception build by <paramref name="fn" /> from contained error.</exception>
     public T Unwrap<TException>(Func<TError, TException> fn)
         where TException : Exception => this switch
-    {
-        Ok(var ok) => ok,
-        Error(var error) => throw fn(error),
-    };
+        {
+            Ok(var ok) => ok,
+            Error(var error) => throw fn(error),
+        };
 
     /// <summary>
     ///     Returns the contained <see cref="Error" /> value or throw an exception containing the <see cref="Ok" /> value.
@@ -439,10 +439,10 @@ public abstract record Result<T, TError> : Result
     /// </exception>
     public TError UnwrapError<TException>(Func<T, TException> fn)
         where TException : Exception => this switch
-    {
-        Ok(var ok) => throw fn(ok),
-        Error(var error) => error,
-    };
+        {
+            Ok(var ok) => throw fn(ok),
+            Error(var error) => error,
+        };
 
     /// <summary>
     ///     Returns the contained <see cref="Ok" /> value or a provided value.
@@ -508,19 +508,19 @@ public abstract record Result<T, TError> : Result
     ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
     ///     contains the underlying success value.
     /// </summary>
-    public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
+    public static implicit operator Result<T, TError>(Result.Values.Ok<T> ok) => new Ok(ok.Value);
 
     /// <summary>
     ///     Converts the given ERROR value into the <see cref="Result{T,TError}.Error" /> variant that contains the underlying
     ///     error value.
     /// </summary>
-    public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) => new Error(error.Value);
+    public static implicit operator Result<T, TError>(Result.Values.Error<TError> error) => new Error(error.Value);
 
     /// <summary>
     ///     Represents the successful result of an operation, containing a value of the specified type.
     /// </summary>
     /// <param name="Value">The underlying successful value.</param>
-    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>;
+    public sealed record Ok(T Value) : Result<T, TError>, Ok<T>;
 
     /// <summary>
     ///     Represents a failed result containing error information of the specified type.
@@ -533,7 +533,7 @@ public abstract record Result<T, TError> : Result
     ///     The underlying failure value.
     ///     Cannot be null if the error type is a reference type.
     /// </param>
-    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
+    public sealed record Error(TError Value) : Result<T, TError>, Error<TError>;
 
-    #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+#pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 }
