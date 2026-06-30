@@ -28,9 +28,9 @@ public abstract record PolymorphicResult<T, TError>
     public abstract PolymorphicResult<T, TMap> MapError<TMap>(Func<TError, TMap> map)
         where TMap : notnull;
 
-    public static implicit operator PolymorphicResult<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
+    public static implicit operator PolymorphicResult<T, TError>(Result.Values.Ok<T> ok) => new Ok(ok.Value);
 
-    public static implicit operator PolymorphicResult<T, TError>(ResultSyntax.ErrorValue<TError> error)
+    public static implicit operator PolymorphicResult<T, TError>(Result.Values.Error<TError> error)
         => new Error(error.Value);
 
     public sealed record Ok(T Value) : PolymorphicResult<T, TError>, Result.Ok<T>

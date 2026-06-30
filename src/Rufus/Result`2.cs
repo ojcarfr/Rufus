@@ -508,13 +508,13 @@ public abstract record Result<T, TError>
     ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
     ///     contains the underlying success value.
     /// </summary>
-    public static implicit operator Result<T, TError>(ResultSyntax.OkValue<T> ok) => new Ok(ok.Value);
+    public static implicit operator Result<T, TError>(Result.Values.Ok<T> ok) => new Ok(ok.Value);
 
     /// <summary>
     ///     Converts the given ERROR value into the <see cref="Result{T,TError}.Error" /> variant that contains the underlying
     ///     error value.
     /// </summary>
-    public static implicit operator Result<T, TError>(ResultSyntax.ErrorValue<TError> error) => new Error(error.Value);
+    public static implicit operator Result<T, TError>(Result.Values.Error<TError> error) => new Error(error.Value);
 
     /// <summary>
     ///     Represents the successful result of an operation, containing a value of the specified type.
