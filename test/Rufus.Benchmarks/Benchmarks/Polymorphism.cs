@@ -1,4 +1,4 @@
-﻿namespace Rufus.Benchmarks.Benchmarks;
+namespace Rufus.Benchmarks.Benchmarks;
 
 using System.Diagnostics.CodeAnalysis;
 using BenchmarkDotNet.Attributes;

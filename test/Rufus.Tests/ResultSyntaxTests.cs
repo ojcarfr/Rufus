@@ -1,64 +1,30 @@
-﻿namespace Rufus.Tests;
+using Rufus.Tests.Utils;
 
-public class ResultSyntaxTests
+namespace Rufus.Tests;
+
+public partial class ResultSyntaxTests
 {
-    [Fact]
-    public void GivenAnOkValue_WhenDeconstruct_ThenShouldAssignUnderlyingValue()
-    {
-        Result sut = Result.Ok(5);
+    private const string EXPECTED_ERROR = "Expected error";
+    private const int OK_VALUE = 2;
+    private static readonly ApplicationException ExpectedException = new(EXPECTED_ERROR);
 
-        if(sut is not Result.Ok<int>(var result))
-        {
-            Assert.Fail("Result is not OK");
+    public static TheoryData<Promise<int, string>> ErrorPromises =>
+    [
+        Any.Completed.Promise<int, string>(Result.Error(EXPECTED_ERROR)),
+        Any.Pending.Promise<int, string>(Result.Error(EXPECTED_ERROR)),
+    ];
 
-            return;
-        }
+    public static TheoryData<Promise<int, string>> FaultedPromises =>
+    [
+        Any.Completed.Promise<int, string>(ExpectedException),
+        Any.Pending.Promise<int, string>(ExpectedException),
+    ];
 
-        Assert.Equal(5, result);
-    }
-
-    [Fact]
-    public void GivenAnErrorValue_WhenDeconstruct_ThenShouldAssignUnderlyingValue()
-    {
-        Result sut = Result.Error("Expected error");
-
-        if(sut is not Result.Error<string>(var result))
-        {
-            Assert.Fail("Result is not Error");
-
-            return;
-        }
-
-        Assert.Equal("Expected error", result);
-    }
-
-    [Fact]
-    public void GivenAnOkValue_WhenSwitch_ThenShouldMatchCovariantUnderlyingValue()
-    {
-        Result sut = Result.Ok("OK");
-
-        object? result = sut switch
-        {
-            Result.Ok<object>(var value) => value,
-            _ => default,
-        };
-
-        Assert.Equal("OK", result);
-    }
-
-    [Fact]
-    public void GivenAnErrorValue_WhenSwitch_ThenShouldMatchCovariantUnderlyingValue()
-    {
-        Result sut = Result.Error("Expected error");
-
-        object? result = sut switch
-        {
-            Result.Error<object>(var value) => value,
-            _ => default,
-        };
-
-        Assert.Equal("Expected error", result);
-    }
+    public static TheoryData<Promise<int, string>> SucceedPromises =>
+    [
+        Any.Completed.Promise<int, string>(Result.Ok(OK_VALUE)),
+        Any.Pending.Promise<int, string>(Result.Ok(OK_VALUE)),
+    ];
 
     [Fact]
     public void GivenAnOkValue_WhenCastToGenericResult_ThenShouldMatchOkValue()
@@ -67,7 +33,7 @@ public class ResultSyntaxTests
 
         int result = sut switch
         {
-            Result.Ok<int>(var value) => value,
+            Ok<int>(var value) => value,
             _ => default,
         };
 
@@ -81,7 +47,7 @@ public class ResultSyntaxTests
 
         string? result = sut switch
         {
-            Result.Error<string>(var value) => value,
+            Error<string>(var value) => value,
             _ => default,
         };
 
@@ -95,8 +61,8 @@ public class ResultSyntaxTests
 
         bool result = sut switch
         {
-            Result.Ok<object>(List<string> _) => false,
-            Result.Ok<object>(string _) => true,
+            Ok<object>(List<string> _) => false,
+            Ok<object>(string _) => true,
             _ => false,
         };
 
@@ -110,8 +76,8 @@ public class ResultSyntaxTests
 
         bool result = sut switch
         {
-            Result.Error<object>(Exception _) => false,
-            Result.Error<object>(string _) => true,
+            Error<object>(Exception _) => false,
+            Error<object>(string _) => true,
             _ => false,
         };
 
@@ -166,5 +132,103 @@ public class ResultSyntaxTests
 
         Assert.Equal(expected, result);
         op.Received().Invoke(2);
+    }
+
+    [Fact]
+    public async Task GivenAnyErrorResultAndAnyAsyncTaskFunction_WhenAndThen_ThenShouldReturnErrorValue()
+    {
+        Result<int, string> sut = Result.Error(EXPECTED_ERROR);
+        var fn = Substitute.For<Func<int, Task<Result<string, string>>>>();
+
+        Result<string, string> result = await sut.AndThen(fn);
+
+        Assert.Equal(Result.Error(EXPECTED_ERROR), result);
+        await fn.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task GivenAnyErrorResultAndAnyAsyncTaskFunction_WhenOrElse_ThenShouldReturnResultFromFunction()
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Result<int, string> sut = Result.Error(EXPECTED_ERROR);
+        var fn = Substitute.For<Func<string, Task<Result<int, int>>>>();
+        fn.Invoke(EXPECTED_ERROR).Returns(expected);
+
+        Result<int, int> result = await sut.OrElse(fn);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task GivenAnyErrorResultAndAnyAsyncValueTaskFunction_WhenAndThen_ThenShouldReturnErrorValue()
+    {
+        Result<int, string> sut = Result.Error(EXPECTED_ERROR);
+        var fn = Substitute.For<Func<int, ValueTask<Result<string, string>>>>();
+
+        Result<string, string> result = await sut.AndThen(fn);
+
+        Assert.Equal(Result.Error(EXPECTED_ERROR), result);
+        await fn.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task GivenAnyErrorResultAndAnyAsyncValueTaskFunction_WhenOrElse_ThenShouldReturnResultFromFunction()
+    {
+        Result<int, int> expected = Result.Ok(OK_VALUE);
+        Result<int, string> sut = Result.Error(EXPECTED_ERROR);
+        var fn = Substitute.For<Func<string, ValueTask<Result<int, int>>>>();
+        fn.Invoke(EXPECTED_ERROR).Returns(expected);
+
+        Result<int, int> result = await sut.OrElse(fn);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task GivenAnyOkResultAndAnyAsyncTaskFunction_WhenAndThen_ThenShouldReturnResultFromFunction()
+    {
+        Result<int, string> sut = Result.Ok(OK_VALUE);
+        var fn = Substitute.For<Func<int, Task<Result<string, string>>>>();
+        fn.Invoke(OK_VALUE).Returns(Result.Error(EXPECTED_ERROR));
+
+        Result<string, string> result = await sut.AndThen(fn);
+
+        Assert.Equal(Result.Error(EXPECTED_ERROR), result);
+    }
+
+    [Fact]
+    public async Task GivenAnyOkResultAndAnyAsyncTaskFunction_WhenOrElse_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(OK_VALUE);
+        var fn = Substitute.For<Func<string, Task<Result<int, int>>>>();
+
+        Result<int, int> result = await sut.OrElse(fn);
+
+        Assert.Equal(Result.Ok(OK_VALUE), result);
+        await fn.DidNotReceive().Invoke(Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task GivenAnyOkResultAndAnyAsyncValueTaskFunction_WhenAndThen_ThenShouldReturnResultFromFunction()
+    {
+        Result<int, string> sut = Result.Ok(OK_VALUE);
+        var fn = Substitute.For<Func<int, ValueTask<Result<string, string>>>>();
+        fn.Invoke(OK_VALUE).Returns(Result.Error(EXPECTED_ERROR));
+
+        Result<string, string> result = await sut.AndThen(fn);
+
+        Assert.Equal(Result.Error(EXPECTED_ERROR), result);
+    }
+
+    [Fact]
+    public async Task GivenAnyOkResultAndAnyAsyncValueTaskFunction_WhenOrElse_ThenShouldReturnOkValue()
+    {
+        Result<int, string> sut = Result.Ok(OK_VALUE);
+        var fn = Substitute.For<Func<string, ValueTask<Result<int, int>>>>();
+
+        Result<int, int> result = await sut.OrElse(fn);
+
+        Assert.Equal(Result.Ok(OK_VALUE), result);
+        await fn.DidNotReceive().Invoke(Arg.Any<string>());
     }
 }
