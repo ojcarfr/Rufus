@@ -1,4 +1,4 @@
-﻿namespace System;
+namespace System;
 
 public static partial class ResultSyntax
 {
@@ -24,7 +24,7 @@ public static partial class ResultSyntax
         => result switch
         {
             Result<T, TError>.Ok(var ok) => next(ok),
-            Result<T, TError>.Error(var error) => Task.FromError<TMap, TError>(error),
+            Result<T, TError>.Error(var error) => Task.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
         };
 
     /// <summary>
@@ -47,7 +47,7 @@ public static partial class ResultSyntax
         => result switch
         {
             Result<T, TError>.Ok(var ok) => next(ok),
-            Result<T, TError>.Error(var error) => ValueTask.FromError<TMap, TError>(error),
+            Result<T, TError>.Error(var error) => ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
         };
 
     /// <summary>
@@ -69,7 +69,7 @@ public static partial class ResultSyntax
         where TMapError : notnull
         => result switch
         {
-            Result<T, TError>.Ok(var ok) => Task.FromOk<T, TMapError>(ok),
+            Result<T, TError>.Ok(var ok) => Task.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             Result<T, TError>.Error(var error) => op(error),
         };
 
@@ -92,7 +92,7 @@ public static partial class ResultSyntax
         where TMapError : notnull
         => result switch
         {
-            Result<T, TError>.Ok(var ok) => ValueTask.FromOk<T, TMapError>(ok),
+            Result<T, TError>.Ok(var ok) => ValueTask.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             Result<T, TError>.Error(var error) => op(error),
         };
 
@@ -117,8 +117,8 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => next(ok),
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => Task.
-                FromError<TMap, TError>(error),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
+                Task.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
             _ => BindAsync(promise, next),
         };
 
@@ -128,7 +128,7 @@ public static partial class ResultSyntax
             return await promise.ConfigureAwait(false) switch
             {
                 Result<T, TError>.Ok(var ok) => await next(ok).ConfigureAwait(false),
-                Result<T, TError>.Error(var error) => Result.Error(error),
+                Result<T, TError>.Error(var error) => new Result<TMap, TError>.Error(error),
             };
         }
     }
@@ -154,8 +154,8 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => next(ok),
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => ValueTask.
-                FromError<TMap, TError>(error),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
+                ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
             _ => BindAsync(promise, next),
         };
 
@@ -164,7 +164,7 @@ public static partial class ResultSyntax
             => await promise.ConfigureAwait(false) switch
             {
                 Result<T, TError>.Ok(var ok) => await next(ok).ConfigureAwait(false),
-                Result<T, TError>.Error(var error) => Result.Error(error),
+                Result<T, TError>.Error(var error) => new Result<TMap, TError>.Error(error),
             };
     }
 
@@ -189,8 +189,8 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => ok.Bind(next),
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => Task.
-                FromError<TMap, TError>(error),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
+                Task.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
             _ => BindAsync(promise, next),
         };
 
@@ -224,7 +224,7 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
-                Task.FromOk<T, TMapError>(ok),
+                Task.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => op(error),
             _ => BindAsync(promise, op),
         };
@@ -258,8 +258,8 @@ public static partial class ResultSyntax
     {
         return promise switch
         {
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => ValueTask.
-                FromOk<T, TMapError>(ok),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
+                ValueTask.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => op(error),
             _ => BindAsync(promise, op),
         };
@@ -294,8 +294,8 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
-                Task.FromOk<T, TMapError>(ok),
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => error.Bind(op),
+                Task.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => Task.FromResult<Result<T, TMapError>>(op(error)),
             _ => BindAsync(promise, op),
         };
 
@@ -330,8 +330,8 @@ public static partial class ResultSyntax
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
                 new ValueTask<Result<TMap, TError>>(next(ok)),
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => ValueTask.
-                FromError<TMap, TError>(error),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
+                ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
             _ => BindAsync(promise, next),
         };
 
@@ -341,7 +341,7 @@ public static partial class ResultSyntax
             return await promise.ConfigureAwait(false) switch
             {
                 Result<T, TError>.Ok(var ok) => await next(ok).ConfigureAwait(false),
-                Result<T, TError>.Error(var error) => Result.Error(error),
+                Result<T, TError>.Error(var error) => new Result<TMap, TError>.Error(error),
             };
         }
     }
@@ -367,8 +367,8 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => next(ok),
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => ValueTask.
-                FromError<TMap, TError>(error),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
+                ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
             _ => BindAsync(promise, next),
         };
 
@@ -377,7 +377,7 @@ public static partial class ResultSyntax
             => await promise.ConfigureAwait(false) switch
             {
                 Result<T, TError>.Ok(var ok) => await next(ok).ConfigureAwait(false),
-                Result<T, TError>.Error(var error) => Result.Error(error),
+                Result<T, TError>.Error(var error) => new Result<TMap, TError>.Error(error),
             };
     }
 
@@ -403,8 +403,8 @@ public static partial class ResultSyntax
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
                 new ValueTask<Result<TMap, TError>>(ok.Bind(next)),
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => ValueTask.
-                FromError<TMap, TError>(error),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
+                ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
             _ => BindAsync(promise, next),
         };
 
@@ -438,7 +438,7 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
-                ValueTask.FromOk<T, TMapError>(ok),
+                ValueTask.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 new ValueTask<Result<T, TMapError>>(op(error)),
             _ => BindAsync(promise, op),
@@ -474,7 +474,7 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => ValueTask.
-                FromOk<T, TMapError>(ok),
+                FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => op(error),
             _ => BindAsync(promise, op),
         };
@@ -509,7 +509,7 @@ public static partial class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
-                ValueTask.FromOk<T, TMapError>(ok),
+                ValueTask.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 new ValueTask<Result<T, TMapError>>(error.Bind(op)),
             _ => BindAsync(promise, op),
