@@ -4,7 +4,11 @@
     name: "C# (.NET) 11-Preview",
     //  image: "mcr.microsoft.com/devcontainers/dotnet:11.0-preview-resolute",
     // All available preview tags: https://mcr.microsoft.com/v2/dotnet/nightly/sdk/tags/list
-    image: "mcr.microsoft.com/dotnet/nightly/sdk:11.0.100-rc.2",
+    //    image: "mcr.microsoft.com/dotnet/nightly/sdk:11.0.100-rc.2",
+    build: {
+        dockerfile: "./Dockerfile",
+        context: "."
+    },
     customizations : {
         // Configure JetBrains IDE-specific properties
         jetbrains : {
@@ -21,14 +25,29 @@
         }
     },
     features: {
-        "ghcr.io/devcontainers/features/git" : {}
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "username": "vscode",
+            "upgradePackages": "true",
+            "userUid": "1000",
+            "userGid": "1000"
+        },
+        "ghcr.io/devcontainers/features/node:2": {
+            "version": "none"
+        },
+        "ghcr.io/devcontainers/features/git:1": {
+            "version": "latest",
+            "ppa": "false"
+        }
         // Add additional features to your project using auto-completion.
         //    // dev containers for dotnet published by Microsoft do not have all the prerequisites for Rider or any other JetBrains IDE
         //    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
         //      "packages": "openssh-server,openjdk-25-jre"
         //    }
-    }
-    // Comment out to connect as the root user.
-    //    remoteUser: "vscode",
-    //    postAttachCommand: "sudo chown -R vscode /workspaces"
+    },
+    "workspaceFolder": "/workspaces/Rufus",
+    "postAttachCommand": "sudo chown -R vscode /workspaces",
+    "postCreateCommand": "dotnet restore",
+    // Set `remoteUser` to `root` to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "remoteUser": "vscode"
 }

@@ -644,9 +644,9 @@ csharp_indent_typearg_angles = inside
 csharp_indent_pars = inside
 
 # Preprocessor Directives
-csharp_indent_preprocessor_if = usual_indent
-csharp_indent_preprocessor_region = usual_indent
-csharp_indent_preprocessor_other = usual_indent
+csharp_indent_preprocessor_if = no_indent
+csharp_indent_preprocessor_region = no_indent
+csharp_indent_preprocessor_other = no_indent
 
 # Other Indents
 csharp_indent_type_constraints = true

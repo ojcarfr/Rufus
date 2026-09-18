@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>net11.0;net10.0;net8.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -12,14 +12,17 @@
         <Description>Railway Oriented Programming primitives implementation for C# inspired in Rust types.</Description>
         <PackageTags>RUP union result</PackageTags>
         <RootNamespace>System</RootNamespace>
+        <LangVersion>preview</LangVersion>
+        <Version>2.5.0</Version>
+        <Title>Rufus</Title>
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="Rufus.Tests" />
+        <InternalsVisibleTo Include="Rufus.Tests"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="shinkansen.png" Pack="True" PackagePath="\" />
+        <None Include="shinkansen.png" Pack="True" PackagePath="\"/>
     </ItemGroup>
 
 </Project>
