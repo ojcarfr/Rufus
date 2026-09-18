@@ -520,7 +520,7 @@ public abstract record Result<T, TError>
     ///     Represents the successful result of an operation, containing a value of the specified type.
     /// </summary>
     /// <param name="Value">The underlying successful value.</param>
-    public sealed record Ok(T Value) : Result<T, TError>, Ok<T>;
+    public sealed record Ok(T Value) : Result<T, TError>, Result.Ok<T>;
 
     /// <summary>
     ///     Represents a failed result containing error information of the specified type.
@@ -533,7 +533,7 @@ public abstract record Result<T, TError>
     ///     The underlying failure value.
     ///     Cannot be null if the error type is a reference type.
     /// </param>
-    public sealed record Error(TError Value) : Result<T, TError>, Error<TError>;
+    public sealed record Error(TError Value) : Result<T, TError>, Result.Error<TError>;
 
 #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 }

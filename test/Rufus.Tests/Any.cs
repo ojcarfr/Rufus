@@ -4,6 +4,22 @@ using Rufus.Tests.Utils;
 
 public static class Any
 {
+    public static Result.Values.Ok<T> Ok<T>(T value)
+        where T : notnull =>
+#if NET10_0_OR_GREATER
+        Result.Ok(value);
+#else
+        Result.Success(value);
+#endif
+
+    public static Result.Values.Error<T> Error<T>(T value)
+        where T : notnull =>
+#if NET10_0_OR_GREATER
+        Result.Error(value);
+#else
+        Result.Failure(value);
+#endif
+
     public static class Completed
     {
         public static Promise<T, TError> Promise<T, TError>(Result<T, TError> result)

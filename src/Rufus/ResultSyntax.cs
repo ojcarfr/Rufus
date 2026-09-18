@@ -7,8 +7,55 @@ using System.Runtime.CompilerServices;
 /// </summary>
 public static class ResultSyntax
 {
+#if NET10_0_OR_GREATER
     /// <summary>
-    ///     Unnest any <see cref="Result{T,TError}" /> that returns any result else in case of <see cref="Result{T, TError}.Ok" />.
+    ///     Result static initialization methods.
+    /// </summary>
+    extension(Result)
+    {
+        /// <summary>
+        ///     Returns a success results of a void operations, containing an unit value.
+        /// </summary>
+        public static Result.Values.Ok<_> Ok() => new();
+
+        /// <summary>
+        ///     Returns a success value containing the specified <paramref name="value" />.
+        ///     This value type should be implicitly converted to a <see cref="Result{T, TError}" />.
+        /// </summary>
+        /// <example>
+        ///     <code>
+        ///     public static Result&lt;int, string> Divide(int numerator, int denominator) =>
+        ///         denominator switch
+        ///         {
+        ///             0 => Result.Error("Denominator cannot be zero."),
+        ///             _ => Result.Ok(numerator / denominator),
+        ///         };
+        ///     </code>
+        /// </example>
+        public static Result.Values.Ok<T> Ok<T>(T value)
+            where T : notnull => new(value);
+
+        /// <summary>
+        ///     Returns a failure value containing the specified <paramref name="value" />.
+        /// </summary>
+        /// <example>
+        ///     <code>
+        ///     public static Result&lt;int, string> Divide(int numerator, int denominator) =>
+        ///         denominator switch
+        ///         {
+        ///             0 => Result.Error("Denominator cannot be zero."),
+        ///             _ => Result.Ok(numerator / denominator),
+        ///         };
+        ///     </code>
+        /// </example>
+        public static Result.Values.Error<TError> Error<TError>(TError value)
+            where TError : notnull => new(value);
+    }
+#endif
+
+    /// <summary>
+    ///     Unnest any <see cref="Result{T,TError}" /> that returns any result else in case of
+    ///     <see cref="Result{T, TError}.Ok" />.
     /// </summary>
     /// <example>
     ///     <code>
@@ -32,6 +79,21 @@ public static class ResultSyntax
             _ => throw new SwitchExpressionException(result),
         };
 
+    private static Task<Result<TSuccess, TError>> Bind<T, TSuccess, TError>(
+        this T value, Func<T, Result<TSuccess, TError>> fn)
+        where TSuccess : notnull
+        where TError : notnull
+    {
+        try
+        {
+            return Task.FromResult(fn(value));
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException<Result<TSuccess, TError>>(exception);
+        }
+    }
+
 #pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
 
     /// <summary>
@@ -47,14 +109,16 @@ public static class ResultSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Result{T,TError}.Ok" />, otherwise returns
     ///     another result containing the error value.
     /// </returns>
-    public static Task<Result<TMap, TError>> AndThen<T, TError, TMap>(this Result<T, TError> result, Func<T, Task<Result<TMap, TError>>> next)
+    public static Task<Result<TMap, TError>> AndThen<T, TError, TMap>(this Result<T, TError> result,
+                                                                      Func<T, Task<Result<TMap, TError>>> next)
         where T : notnull
         where TError : notnull
         where TMap : notnull
         => result switch
         {
             Result<T, TError>.Ok(var ok) => next(ok),
-            Result<T, TError>.Error(var error) => Task.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
+            Result<T, TError>.Error(var error) => Task.FromResult<Result<TMap, TError>>(
+                new Result<TMap, TError>.Error(error)),
         };
 
     /// <summary>
@@ -70,14 +134,16 @@ public static class ResultSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Result{T,TError}.Ok" />, otherwise returns
     ///     another result containing the error value.
     /// </returns>
-    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(this Result<T, TError> result, Func<T, ValueTask<Result<TMap, TError>>> next)
+    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(
+        this Result<T, TError> result, Func<T, ValueTask<Result<TMap, TError>>> next)
         where T : notnull
         where TError : notnull
         where TMap : notnull
         => result switch
         {
             Result<T, TError>.Ok(var ok) => next(ok),
-            Result<T, TError>.Error(var error) => ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
+            Result<T, TError>.Error(var error) => ValueTask.FromResult<Result<TMap, TError>>(
+                new Result<TMap, TError>.Error(error)),
         };
 
     /// <summary>
@@ -93,7 +159,8 @@ public static class ResultSyntax
     ///     The result returned by <paramref name="op" /> function, otherwise returns <see cref="Result{T,TError}.Ok" />
     ///     value.
     /// </returns>
-    public static Task<Result<T, TMapError>> OrElse<T, TError, TMapError>(this Result<T, TError> result, Func<TError, Task<Result<T, TMapError>>> op)
+    public static Task<Result<T, TMapError>> OrElse<T, TError, TMapError>(
+        this Result<T, TError> result, Func<TError, Task<Result<T, TMapError>>> op)
         where T : notnull
         where TError : notnull
         where TMapError : notnull
@@ -116,7 +183,8 @@ public static class ResultSyntax
     ///     The result returned by <paramref name="op" /> function, otherwise returns <see cref="Result{T,TError}.Ok" />
     ///     value.
     /// </returns>
-    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(this Result<T, TError> result, Func<TError, ValueTask<Result<T, TMapError>>> op)
+    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(
+        this Result<T, TError> result, Func<TError, ValueTask<Result<T, TMapError>>> op)
         where T : notnull
         where TError : notnull
         where TMapError : notnull
@@ -139,7 +207,8 @@ public static class ResultSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Result{T,TError}.Ok" />, otherwise returns
     ///     another result containing the error value.
     /// </returns>
-    public static Task<Result<TMap, TError>> AndThen<T, TError, TMap>(this Task<Result<T, TError>> promise, Func<T, Task<Result<TMap, TError>>> next)
+    public static Task<Result<TMap, TError>> AndThen<T, TError, TMap>(this Task<Result<T, TError>> promise,
+                                                                      Func<T, Task<Result<TMap, TError>>> next)
         where T : notnull
         where TError : notnull
         where TMap : notnull
@@ -149,7 +218,7 @@ public static class ResultSyntax
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => next(ok),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 Task.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
-            _ => BindAsync(promise, next),
+            _ => BindAsync(promise: promise, next: next),
         };
 
         static async Task<Result<TMap, TError>> BindAsync(Task<Result<T, TError>> promise,
@@ -176,7 +245,8 @@ public static class ResultSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Result{T,TError}.Ok" />, otherwise returns
     ///     another result containing the error value.
     /// </returns>
-    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(this Task<Result<T, TError>> promise, Func<T, ValueTask<Result<TMap, TError>>> next)
+    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(
+        this Task<Result<T, TError>> promise, Func<T, ValueTask<Result<TMap, TError>>> next)
         where T : notnull
         where TError : notnull
         where TMap : notnull
@@ -186,7 +256,7 @@ public static class ResultSyntax
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => next(ok),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
-            _ => BindAsync(promise, next),
+            _ => BindAsync(promise: promise, next: next),
         };
 
         static async ValueTask<Result<TMap, TError>> BindAsync(Task<Result<T, TError>> promise,
@@ -211,7 +281,8 @@ public static class ResultSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Result{T,TError}.Ok" />, otherwise returns
     ///     another result containing the error value.
     /// </returns>
-    public static Task<Result<TMap, TError>> AndThen<T, TError, TMap>(this Task<Result<T, TError>> promise, Func<T, Result<TMap, TError>> next)
+    public static Task<Result<TMap, TError>> AndThen<T, TError, TMap>(this Task<Result<T, TError>> promise,
+                                                                      Func<T, Result<TMap, TError>> next)
         where T : notnull
         where TError : notnull
         where TMap : notnull
@@ -221,7 +292,7 @@ public static class ResultSyntax
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => ok.Bind(next),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 Task.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
-            _ => BindAsync(promise, next),
+            _ => BindAsync(promise: promise, next: next),
         };
 
         static async Task<Result<TMap, TError>> BindAsync(Task<Result<T, TError>> promise,
@@ -246,7 +317,8 @@ public static class ResultSyntax
     ///     The result returned by <paramref name="op" /> function, otherwise returns <see cref="Result{T,TError}.Ok" />
     ///     value.
     /// </returns>
-    public static Task<Result<T, TMapError>> OrElse<T, TError, TMapError>(this Task<Result<T, TError>> promise, Func<TError, Task<Result<T, TMapError>>> op)
+    public static Task<Result<T, TMapError>> OrElse<T, TError, TMapError>(
+        this Task<Result<T, TError>> promise, Func<TError, Task<Result<T, TMapError>>> op)
         where T : notnull
         where TError : notnull
         where TMapError : notnull
@@ -256,7 +328,7 @@ public static class ResultSyntax
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
                 Task.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => op(error),
-            _ => BindAsync(promise, op),
+            _ => BindAsync(promise: promise, op: op),
         };
 
         static async Task<Result<T, TMapError>> BindAsync(Task<Result<T, TError>> promise,
@@ -281,7 +353,8 @@ public static class ResultSyntax
     ///     The result returned by <paramref name="op" /> function, otherwise returns <see cref="Result{T,TError}.Ok" />
     ///     value.
     /// </returns>
-    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(this Task<Result<T, TError>> promise, Func<TError, ValueTask<Result<T, TMapError>>> op)
+    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(
+        this Task<Result<T, TError>> promise, Func<TError, ValueTask<Result<T, TMapError>>> op)
         where T : notnull
         where TError : notnull
         where TMapError : notnull
@@ -291,7 +364,7 @@ public static class ResultSyntax
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
                 ValueTask.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => op(error),
-            _ => BindAsync(promise, op),
+            _ => BindAsync(promise: promise, op: op),
         };
 
         static async ValueTask<Result<T, TMapError>> BindAsync(Task<Result<T, TError>> promise,
@@ -316,7 +389,8 @@ public static class ResultSyntax
     ///     The result returned by <paramref name="op" /> function, otherwise returns <see cref="Result{T,TError}.Ok" />
     ///     value.
     /// </returns>
-    public static Task<Result<T, TMapError>> OrElse<T, TError, TMapError>(this Task<Result<T, TError>> promise, Func<TError, Result<T, TMapError>> op)
+    public static Task<Result<T, TMapError>> OrElse<T, TError, TMapError>(
+        this Task<Result<T, TError>> promise, Func<TError, Result<T, TMapError>> op)
         where T : notnull
         where TError : notnull
         where TMapError : notnull
@@ -325,8 +399,9 @@ public static class ResultSyntax
         {
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } =>
                 Task.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
-            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => Task.FromResult<Result<T, TMapError>>(op(error)),
-            _ => BindAsync(promise, op),
+            { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => Task.
+                FromResult(op(error)),
+            _ => BindAsync(promise: promise, op: op),
         };
 
         static async Task<Result<T, TMapError>> BindAsync(Task<Result<T, TError>> promise,
@@ -351,7 +426,8 @@ public static class ResultSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Result{T,TError}.Ok" />, otherwise returns
     ///     another result containing the error value.
     /// </returns>
-    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(this ValueTask<Result<T, TError>> promise, Func<T, Task<Result<TMap, TError>>> next)
+    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(
+        this ValueTask<Result<T, TError>> promise, Func<T, Task<Result<TMap, TError>>> next)
         where T : notnull
         where TError : notnull
         where TMap : notnull
@@ -362,7 +438,7 @@ public static class ResultSyntax
                 new ValueTask<Result<TMap, TError>>(next(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
-            _ => BindAsync(promise, next),
+            _ => BindAsync(promise: promise, next: next),
         };
 
         static async ValueTask<Result<TMap, TError>> BindAsync(ValueTask<Result<T, TError>> promise,
@@ -389,7 +465,8 @@ public static class ResultSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Result{T,TError}.Ok" />, otherwise returns
     ///     another result containing the error value.
     /// </returns>
-    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(this ValueTask<Result<T, TError>> promise, Func<T, ValueTask<Result<TMap, TError>>> next)
+    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(
+        this ValueTask<Result<T, TError>> promise, Func<T, ValueTask<Result<TMap, TError>>> next)
         where T : notnull
         where TError : notnull
         where TMap : notnull
@@ -399,7 +476,7 @@ public static class ResultSyntax
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => next(ok),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
-            _ => BindAsync(promise, next),
+            _ => BindAsync(promise: promise, next: next),
         };
 
         static async ValueTask<Result<TMap, TError>> BindAsync(ValueTask<Result<T, TError>> promise,
@@ -424,7 +501,8 @@ public static class ResultSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Result{T,TError}.Ok" />, otherwise returns
     ///     another result containing the error value.
     /// </returns>
-    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(this ValueTask<Result<T, TError>> promise, Func<T, Result<TMap, TError>> next)
+    public static ValueTask<Result<TMap, TError>> AndThen<T, TError, TMap>(
+        this ValueTask<Result<T, TError>> promise, Func<T, Result<TMap, TError>> next)
         where T : notnull
         where TError : notnull
         where TMap : notnull
@@ -435,7 +513,7 @@ public static class ResultSyntax
                 new ValueTask<Result<TMap, TError>>(ok.Bind(next)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 ValueTask.FromResult<Result<TMap, TError>>(new Result<TMap, TError>.Error(error)),
-            _ => BindAsync(promise, next),
+            _ => BindAsync(promise: promise, next: next),
         };
 
         static async ValueTask<Result<TMap, TError>> BindAsync(ValueTask<Result<T, TError>> promise,
@@ -460,7 +538,8 @@ public static class ResultSyntax
     ///     The result returned by <paramref name="op" /> function, otherwise returns <see cref="Result{T,TError}.Ok" />
     ///     value.
     /// </returns>
-    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(this ValueTask<Result<T, TError>> promise, Func<TError, Task<Result<T, TMapError>>> op)
+    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(
+        this ValueTask<Result<T, TError>> promise, Func<TError, Task<Result<T, TMapError>>> op)
         where T : notnull
         where TError : notnull
         where TMapError : notnull
@@ -471,7 +550,7 @@ public static class ResultSyntax
                 ValueTask.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 new ValueTask<Result<T, TMapError>>(op(error)),
-            _ => BindAsync(promise, op),
+            _ => BindAsync(promise: promise, op: op),
         };
 
         static async ValueTask<Result<T, TMapError>> BindAsync(ValueTask<Result<T, TError>> promise,
@@ -496,7 +575,8 @@ public static class ResultSyntax
     ///     The result returned by <paramref name="op" /> function, otherwise returns <see cref="Result{T,TError}.Ok" />
     ///     value.
     /// </returns>
-    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(this ValueTask<Result<T, TError>> promise, Func<TError, ValueTask<Result<T, TMapError>>> op)
+    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(
+        this ValueTask<Result<T, TError>> promise, Func<TError, ValueTask<Result<T, TMapError>>> op)
         where T : notnull
         where TError : notnull
         where TMapError : notnull
@@ -506,7 +586,7 @@ public static class ResultSyntax
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Ok(var ok) } => ValueTask.
                 FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } => op(error),
-            _ => BindAsync(promise, op),
+            _ => BindAsync(promise: promise, op: op),
         };
 
         static async ValueTask<Result<T, TMapError>> BindAsync(ValueTask<Result<T, TError>> promise,
@@ -531,7 +611,8 @@ public static class ResultSyntax
     ///     The result returned by <paramref name="op" /> function, otherwise returns <see cref="Result{T,TError}.Ok" />
     ///     value.
     /// </returns>
-    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(this ValueTask<Result<T, TError>> promise, Func<TError, Result<T, TMapError>> op)
+    public static ValueTask<Result<T, TMapError>> OrElse<T, TError, TMapError>(
+        this ValueTask<Result<T, TError>> promise, Func<TError, Result<T, TMapError>> op)
         where T : notnull
         where TError : notnull
         where TMapError : notnull
@@ -542,7 +623,7 @@ public static class ResultSyntax
                 ValueTask.FromResult<Result<T, TMapError>>(new Result<T, TMapError>.Ok(ok)),
             { IsCompletedSuccessfully: true, Result: Result<T, TError>.Error(var error) } =>
                 new ValueTask<Result<T, TMapError>>(error.Bind(op)),
-            _ => BindAsync(promise, op),
+            _ => BindAsync(promise: promise, op: op),
         };
 
         static async ValueTask<Result<T, TMapError>> BindAsync(ValueTask<Result<T, TError>> promise,
@@ -555,18 +636,4 @@ public static class ResultSyntax
     }
 
 #pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
-
-    private static Task<Result<TSuccess, TError>> Bind<T, TSuccess, TError>(this T value, Func<T, Result<TSuccess, TError>> fn)
-        where TSuccess : notnull
-        where TError : notnull
-    {
-        try
-        {
-            return Task.FromResult(fn(value));
-        }
-        catch (Exception exception)
-        {
-            return Task.FromException<Result<TSuccess, TError>>(exception);
-        }
-    }
 }
