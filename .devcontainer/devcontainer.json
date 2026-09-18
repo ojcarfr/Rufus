@@ -1,0 +1,34 @@
+// Dotnet 11 preview container Template.
+// For more customization options, see https://containers.dev/implementors/json_reference
+{
+    name: "C# (.NET) 11-Preview",
+    //  image: "mcr.microsoft.com/devcontainers/dotnet:11.0-preview-resolute",
+    // All available preview tags: https://mcr.microsoft.com/v2/dotnet/nightly/sdk/tags/list
+    image: "mcr.microsoft.com/dotnet/nightly/sdk:11.0.100-rc.2",
+    customizations : {
+        // Configure JetBrains IDE-specific properties
+        jetbrains : {
+            backend: "Rider",
+            settings : {
+                "com.intellij:app:HttpConfigurable.use_proxy_pac": true
+                // IDE settings can be added via “Show context actions”|“Add currently modified settings from IDE”.
+                // A complete list of supported settings is also available through auto-completion
+            },
+            plugins: [
+                // A set of plugin IDs.
+                // Plugin ID can be found on the corresponding plugin’s page at https://plugins.jetbrains.com.
+            ]
+        }
+    },
+    features: {
+        "ghcr.io/devcontainers/features/git" : {}
+        // Add additional features to your project using auto-completion.
+        //    // dev containers for dotnet published by Microsoft do not have all the prerequisites for Rider or any other JetBrains IDE
+        //    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+        //      "packages": "openssh-server,openjdk-25-jre"
+        //    }
+    }
+    // Comment out to connect as the root user.
+    //    remoteUser: "vscode",
+    //    postAttachCommand: "sudo chown -R vscode /workspaces"
+}
