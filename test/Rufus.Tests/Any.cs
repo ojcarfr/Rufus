@@ -4,21 +4,19 @@ using Rufus.Tests.Utils;
 
 public static class Any
 {
+#if NET11_0_OR_GREATER
+    public static Result.Ok<T> Ok<T>(T value)
+#else
     public static Result.Values.Ok<T> Ok<T>(T value)
-        where T : notnull =>
-#if NET10_0_OR_GREATER
-        Result.Ok(value);
-#else
-        Result.Success(value);
 #endif
+        where T : notnull => new(value);
 
-    public static Result.Values.Error<T> Error<T>(T value)
-        where T : notnull =>
-#if NET10_0_OR_GREATER
-        Result.Error(value);
+#if NET11_0_OR_GREATER
+    public static Result.Error<T> Error<T>(T value)
 #else
-        Result.Failure(value);
+    public static Result.Values.Error<T> Error<T>(T value)
 #endif
+        where T : notnull => new(value);
 
     public static class Completed
     {

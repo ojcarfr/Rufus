@@ -222,7 +222,7 @@ public class ResultTests
                 Select(int.Parse).
                 Sum());
 
-        Assert.Equal(expected: 15, actual: Assert.IsType<Result<int, string>.Ok>(result).Value);
+        Assert.Equal(expected: Any.Ok(15), actual: result);
     }
 
     [Fact]
@@ -232,7 +232,7 @@ public class ResultTests
 
         var result = sut.Map(_ => 0);
 
-        Assert.Equal(expected: "Expected error", actual: Assert.IsType<Result<int, string>.Error>(result).Value);
+        Assert.Equal(Any.Error("Expected error"), result);
     }
 
     [Fact]

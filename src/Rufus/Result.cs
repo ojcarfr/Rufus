@@ -1,5 +1,7 @@
 namespace System;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
 ///     Defines the variant types of <see cref="Result{T, TError}" /> discriminator union.
 /// </summary>
@@ -8,6 +10,9 @@ namespace System;
 /// </remarks>
 public static class Result
 {
+    internal static SwitchExpressionException Uninitialized()
+        => new();
+
     /// <summary>
     ///     Contains the success value.
     /// </summary>
