@@ -27,6 +27,7 @@ jobs:
       uses: actions/setup-dotnet@v6
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
+        dotnet-quality: preview
     - name: Install dependencies
       run: dotnet restore
     - name: Build solution
