@@ -1,30 +1,108 @@
 namespace System;
 
+#if NET11_0_OR_GREATER
+using System.Runtime.CompilerServices;
+#else
 using System.Text;
+#endif
+
+using static Result;
 
 /// <summary>
-///     <see cref="Result{T,TError}" /> is the type used for returning and propagating errors. It is a discriminated union
-///     with the variants <see cref="Ok" />, representing success and containing a value, and <see cref="Error" />,
-///     representing failure and containing an error value.
+///     <see cref="Result{T, TErr}" /> is the type used for returning and propagating errors. It is a discriminated union
+///     with the variants <see cref="Ok{T}" />, representing success and containing a value, and
+///     <see cref="Result.Error{T}" />, representing failure and containing an error value.
 /// </summary>
 /// <remarks>
-///     Functions return <see cref="Result{T,TError}" /> whenever errors are expected and recoverable like explained in
+///     Functions return <see cref="Result{T,TErr}" /> whenever errors are expected and recoverable like explained in
 ///     ROP.
 ///     Is not expected to replace the use of exceptions for truly exceptional situations, but
 ///     return failures that are part of the normal domain logic.
 /// </remarks>
 /// <typeparam name="T">Returned type on succeed paths.</typeparam>
 /// <typeparam name="TError">Returned type on failed paths.</typeparam>
+#if NET11_0_OR_GREATER
+[Union]
+public readonly struct Result<T, TError> : IUnion
+    where T : notnull
+    where TError : notnull
+{
+    private readonly Ok<T>? _ok;
+
+    private readonly Error<TError>? _error;
+
+    /// <summary>
+    ///     Creates a new instance of <see cref="Result{T,TErr}" /> containing the given <see cref="Ok{T}" /> value.
+    /// </summary>
+    public Result(in Ok<T> value) => (_ok, _error) = (value, null);
+
+    /// <summary>
+    ///     Creates a new instance of <see cref="Result{T,TErr}" /> containing the given <see cref="Error{T}" />
+    ///     value.
+    /// </summary>
+    public Result(in Error<TError> value) => (_ok, _error) = (null, value);
+
+    /// <summary>
+    ///     Checks whether the result has been initialized with any variant value.
+    /// </summary>
+    public bool HasValue => _ok is not null || _error is not null;
+
+    /// <inheritdoc />
+    public object? Value => this switch
+    {
+        { _ok: { } ok } => ok,
+        { _error: { } error } => error,
+        _ => null,
+    };
+
+    /// <summary>
+    ///     Checks type-pattern of variant <see cref="Ok{T}" /> value.
+    /// </summary>
+    /// <param name="value">The error value.</param>
+    /// <returns><c>true</c> if the result is <see cref="Ok{T}" />, <c>false</c> otherwise.</returns>
+    public bool TryGetValue(out Ok<T> value)
+    {
+        if (_ok is { } ok)
+        {
+            value = ok;
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    /// <summary>
+    ///     Checks type-pattern of variant <see cref="Error{T}" /> value.
+    /// </summary>
+    /// <param name="value">The error value.</param>
+    /// <returns><c>true</c> if the result is <see cref="Error{T}" />, <c>false</c> otherwise.</returns>
+    public bool TryGetValue(out Error<TError> value)
+    {
+        if (_error is { } error)
+        {
+            value = error;
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+#else
 public abstract record Result<T, TError>
     where T : notnull
     where TError : notnull
 {
     private Result() { }
 
-#pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+#endif
 
     /// <summary>
-    ///     Gets a value indicating whether the result is <see cref="Error" />.
+    ///     Gets a value indicating whether the result is <see cref="Error{T}" />.
     /// </summary>
     /// <example>
     ///     <code>
@@ -35,10 +113,15 @@ public abstract record Result<T, TError>
     ///     Assert.True(result.IsError);
     ///     </code>
     /// </example>
-    public bool IsError => this is Error;
+    public bool IsError =>
+#if NET11_0_OR_GREATER
+        _error is not null;
+#else
+        this is Error;
+#endif
 
     /// <summary>
-    ///     Gets a value indicating whether the result is <see cref="Ok" />.
+    ///     Gets a value indicating whether the result is <see cref="Ok{T}" />.
     /// </summary>
     /// <example>
     ///     <code>
@@ -49,10 +132,15 @@ public abstract record Result<T, TError>
     ///     Assert.False(result.IsOk);
     ///     </code>
     /// </example>
-    public bool IsOk => this is Ok;
+    public bool IsOk =>
+#if NET11_0_OR_GREATER
+        _ok is not null;
+#else
+        this is Ok;
+#endif
 
     /// <summary>
-    ///     Checks whether the result is <see cref="Error" /> and the underlying value satisfies
+    ///     Checks whether the result is <see cref="Error{T}" /> and the underlying value satisfies
     ///     the given predicate.
     /// </summary>
     /// <example>
@@ -69,13 +157,18 @@ public abstract record Result<T, TError>
     /// </example>
     /// <param name="predicate">The expression used to evaluate the error value.</param>
     /// <returns>
-    ///     <c>true</c> if the result is <see cref="Error" /> and the underlying value satisfies
+    ///     <c>true</c> if the result is <see cref="Error{T}" /> and the underlying value satisfies
     ///     the given predicate.
     /// </returns>
-    public bool IsErrorAnd(Func<TError, bool> predicate) => this is Error error && predicate(error.Value);
+    public bool IsErrorAnd(Func<TError, bool> predicate) =>
+#if NET11_0_OR_GREATER
+        _error is (var error) _ && predicate(error);
+#else
+        this is Error error && predicate(error.Value);
+#endif
 
     /// <summary>
-    ///     Checks whether the result is <see cref="Ok" /> and the underlying value satisfies
+    ///     Checks whether the result is <see cref="Ok{T}" /> and the underlying value satisfies
     ///     the given predicate.
     /// </summary>
     /// <example>
@@ -92,13 +185,18 @@ public abstract record Result<T, TError>
     /// </example>
     /// <param name="predicate">The expression used to evaluate the success value.</param>
     /// <returns>
-    ///     <c>true</c> if the result is <see cref="Ok" /> and the underlying value inside of it
+    ///     <c>true</c> if the result is <see cref="Ok{T}" /> and the underlying value inside of it
     ///     matches a predicate.
     /// </returns>
-    public bool IsOkAnd(Func<T, bool> predicate) => this is Ok(var ok) && predicate(ok);
+    public bool IsOkAnd(Func<T, bool> predicate) =>
+#if NET11_0_OR_GREATER
+        _ok is (var ok) _ && predicate(ok);
+#else
+        this is Ok(var ok) && predicate(ok);
+#endif
 
     /// <summary>
-    ///     Returns a new result in case of <see cref="Ok" />.
+    ///     Returns a new result in case of <see cref="Ok{T}" />.
     /// </summary>
     /// <remarks>
     ///     Arguments passed to <see cref="And{TMap}" /> are eagerly evaluated; if you are passing the result of a
@@ -123,18 +221,28 @@ public abstract record Result<T, TError>
     ///     Assert.Equal(Result.Ok("different result type"), x.And(y));
     ///     </code>
     /// </example>
-    /// <param name="result">The result to be returned in case of <see cref="Ok" />.</param>
+    /// <param name="result">The result to be returned in case of <see cref="Ok{T}" />.</param>
     /// <typeparam name="TMap">Type of the returned success value.</typeparam>
     /// <returns>
-    ///     Returns <paramref name="result" /> if the result is <see cref="Ok" />, otherwise returns the
-    ///     <see cref="Error" /> value.
+    ///     Returns <paramref name="result" /> if the result is <see cref="Ok{T}" />, otherwise returns the
+    ///     <see cref="Error{T}" /> value.
     /// </returns>
     public Result<TMap, TError> And<TMap>(Result<TMap, TError> result)
-        where TMap : notnull
-        => this is Error(var error) ? new Result<TMap, TError>.Error(error) : result;
+        where TMap : notnull =>
+        this switch
+        {
+#if NET11_0_OR_GREATER
+            { _ok: not null } => result,
+            { _error: { } error } => error,
+#else
+            Ok => result,
+            Error(var error) => new Result<TMap, TError>.Error(error),
+#endif
+            _ => throw Uninitialized(),
+        };
 
     /// <summary>
-    ///     Binds <paramref name="fn" /> function to be executed if the result is <see cref="Ok" />.
+    ///     Binds <paramref name="fn" /> function to be executed if the result is <see cref="Ok{T}" />.
     /// </summary>
     /// <example>
     ///     <code>
@@ -160,16 +268,23 @@ public abstract record Result<T, TError>
     /// </example>
     /// <param name="fn">The bound function to the current result.</param>
     /// <typeparam name="TMap">The type of result returned by bound function.</typeparam>
-    /// <returns>The result of the bound function if <see cref="Ok" />, same error in case of <see cref="Error" />.</returns>
+    /// <returns>The result of the bound function if <see cref="Ok{T}" />, same error in case of <see cref="Error{T}" />.</returns>
     public Result<TMap, TError> AndThen<TMap>(Func<T, Result<TMap, TError>> fn)
-        where TMap : notnull => this switch
+        where TMap : notnull =>
+        this switch
         {
+#if NET11_0_OR_GREATER
+            { _ok.Value: var ok } => fn(ok),
+            { _error: { } error } => error,
+#else
             Ok(var ok) => fn(ok),
             Error(var error) => new Result<TMap, TError>.Error(error),
+#endif
+            _ => throw Uninitialized(),
         };
 
     /// <summary>
-    ///     Returns the specified <paramref name="result" /> in case of <see cref="Error" />.
+    ///     Returns the specified <paramref name="result" /> in case of <see cref="Error{T}" />.
     /// </summary>
     /// <remarks>
     ///     Arguments passed to <see cref="Or" /> are eagerly evaluated; if you are passing the result of a function call, it
@@ -194,17 +309,28 @@ public abstract record Result<T, TError>
     ///     Assert.Equal(Result.Ok(2), x.Or(y));
     ///     </code>
     /// </example>
-    /// <param name="result">The result returned in case of <see cref="Error" />.</param>
+    /// <param name="result">The result returned in case of <see cref="Error{T}" />.</param>
     /// <typeparam name="TMapError">The type of the returned error.</typeparam>
     /// <returns>
-    ///     Returns <paramref name="result" /> if the result is <see cref="Error" />, otherwise returns the
-    ///     <see cref="Ok" /> value.
+    ///     Returns <paramref name="result" /> if the result is <see cref="Error{T}" />, otherwise returns the
+    ///     <see cref="Ok{T}" /> value.
     /// </returns>
     public Result<T, TMapError> Or<TMapError>(Result<T, TMapError> result)
-        where TMapError : notnull => this is Ok(var ok) ? new Result<T, TMapError>.Ok(ok) : result;
+        where TMapError : notnull =>
+        this switch
+        {
+#if NET11_0_OR_GREATER
+            { _ok.Value: { } ok } => new Ok<T>(ok),
+            { _error: not null } => result,
+#else
+            Ok(var ok) => new Result<T, TMapError>.Ok(ok),
+            Error => result,
+#endif
+            _ => throw Uninitialized(),
+        };
 
     /// <summary>
-    ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error" />.
+    ///     Binds <paramref name="op" /> function to be executed if the result is <see cref="Error{T}" />.
     ///     This function can be used for control flow based on result values.
     /// </summary>
     /// <example>
@@ -220,23 +346,33 @@ public abstract record Result<T, TError>
     /// </example>
     /// <param name="op">The bound function that handles the error result and return a new result.</param>
     /// <typeparam name="TMapError">Type of the mapped error by the bound function.</typeparam>
-    /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok" /> value.</returns>
+    /// <returns>The result returned by <paramref name="op" /> function, otherwise returns <see cref="Ok{T}" /> value.</returns>
     public Result<T, TMapError> OrElse<TMapError>(Func<TError, Result<T, TMapError>> op)
-        where TMapError : notnull
-        => this switch
+        where TMapError : notnull =>
+        this switch
         {
+#if NET11_0_OR_GREATER
+            { _ok: { } ok } => ok,
+            { _error.Value: { } error } => op(error),
+#else
             Ok(var ok) => new Result<T, TMapError>.Ok(ok),
             Error(var error) => op(error),
+#endif
+            _ => throw Uninitialized(),
         };
 
     /// <summary>
-    ///     Calls the specified action with the underlying success value if the result is <see cref="Ok" />.
+    ///     Calls the specified action with the underlying success value if the result is <see cref="Ok{T}" />.
     /// </summary>
-    /// <param name="fn">The callback function used when <see cref="Ok" />.</param>
+    /// <param name="fn">The callback function used when <see cref="Ok{T}" />.</param>
     /// <returns>Returns the original result.</returns>
     public Result<T, TError> Inspect(Action<T> fn)
     {
+#if NET11_0_OR_GREATER
+        if (_ok is { Value: { } ok })
+#else
         if (this is Ok(var ok))
+#endif
         {
             fn(ok);
         }
@@ -245,13 +381,17 @@ public abstract record Result<T, TError>
     }
 
     /// <summary>
-    ///     Calls the specified action with the underlying error value if the result is <see cref="Error" />.
+    ///     Calls the specified action with the underlying error value if the result is <see cref="Error{T}" />.
     /// </summary>
-    /// <param name="fn">The callback function used when <see cref="Error" />.</param>
+    /// <param name="fn">The callback function used when <see cref="Error{T}" />.</param>
     /// <returns>Returns the original result.</returns>
     public Result<T, TError> InspectError(Action<TError> fn)
     {
+#if NET11_0_OR_GREATER
+        if (_error is { Value: { } error })
+#else
         if (this is Error(var error))
+#endif
         {
             fn(error);
         }
@@ -261,8 +401,8 @@ public abstract record Result<T, TError>
 
     /// <summary>
     ///     Maps a <see cref="Result{T,TError}" /> to success value <typeparamref name="TMap" /> by
-    ///     applying the given function to a contained <see cref="Ok" /> value, leaving an
-    ///     <see cref="Error" /> value untouched.
+    ///     applying the given function to a contained <see cref="Ok{T}" /> value, leaving an
+    ///     <see cref="Error{T}" /> value untouched.
     ///     This function can be used to compose the results of two functions.
     /// </summary>
     /// <example>
@@ -280,19 +420,26 @@ public abstract record Result<T, TError>
     /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
     /// <returns>
     ///     A new result value containing the mapped value, or the same containing the underlying
-    ///     error in case of <see cref="Error" />.
+    ///     error in case of <see cref="Error{T}" />.
     /// </returns>
     public Result<TMap, TError> Map<TMap>(Func<T, TMap> map)
-        where TMap : notnull => this switch
+        where TMap : notnull =>
+        this switch
         {
+#if NET11_0_OR_GREATER
+            { _ok.Value: { } ok } => new Ok<TMap>(map(ok)),
+            { _error: { } error } => error,
+#else
             Ok(var ok) => new Result<TMap, TError>.Ok(map(ok)),
             Error(var error) => new Result<TMap, TError>.Error(error),
+#endif
+            _ => throw Uninitialized(),
         };
 
     /// <summary>
-    ///     Maps the underlying success value in case of <see cref="Ok" /> by applying the given map
+    ///     Maps the underlying success value in case of <see cref="Ok{T}" /> by applying the given map
     ///     function, or returns the provided <paramref name="default" /> value in case of
-    ///     <see cref="Error" />.
+    ///     <see cref="Error{T}" />.
     /// </summary>
     /// <remarks>
     ///     Arguments passed to <see cref="MapOr" /> are eagerly evaluated; if you are passing the result
@@ -309,29 +456,41 @@ public abstract record Result<T, TError>
     ///     </code>
     /// </example>
     /// <param name="map">The function used to map the success value.</param>
-    /// <param name="default">The default value returned in case of <see cref="Error" />.</param>
+    /// <param name="default">The default value returned in case of <see cref="Error{T}" />.</param>
     /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
-    public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) => this is Ok(var ok) ? map(ok) : @default;
+    public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) =>
+#if NET11_0_OR_GREATER
+        _ok is (var ok) _ ? map(ok) : @default;
+#else
+        this is Ok(var ok) ? map(ok) : @default;
+#endif
 
     /// <summary>
     ///     Maps a <see cref="Result{T,TError}" /> to <typeparamref name="TMap" /> by applying fallback function
-    ///     <paramref name="fallback" /> to a contained <see cref="Error" /> value, of function <paramref name="map" /> to a
-    ///     contained <see cref="Ok" /> value.
+    ///     <paramref name="fallback" /> to a contained <see cref="Error{T}" /> value, of function <paramref name="map" /> to a
+    ///     contained <see cref="Ok{T}" /> value.
     ///     This function can be used to unpack a successful result while handling an error.
     /// </summary>
     /// <param name="map">The function used to map a success value.</param>
     /// <param name="fallback">The function used to return a fallback value in case of error.</param>
     /// <typeparam name="TMap">Type of the mapped success value.</typeparam>
     /// <returns>A new result value containing the mapped success value, or the fallback value in case of error.</returns>
-    public TMap MapOrElse<TMap>(Func<T, TMap> map, Func<TError, TMap> fallback) => this switch
-    {
-        Ok(var ok) => map(ok),
-        Error(var error) => fallback(error),
-    };
+    public TMap MapOrElse<TMap>(Func<T, TMap> map, Func<TError, TMap> fallback) =>
+        this switch
+        {
+#if NET11_0_OR_GREATER
+            { _ok.Value: { } ok } => map(ok),
+            { _error.Value: { } error } => fallback(error),
+#else
+            Ok(var ok) => map(ok),
+            Error(var error) => fallback(error),
+#endif
+            _ => throw Uninitialized(),
+        };
 
     /// <summary>
     ///     Maps an underlying error value to <typeparamref name="TMapError" /> by applying the given function to a contained
-    ///     <see cref="Error" /> value, leaving an <see cref="Ok" /> value untouched.
+    ///     <see cref="Error{T}" /> value, leaving an <see cref="Ok{T}" /> value untouched.
     ///     This function can be used to pass through a successful result while handling an error.
     /// </summary>
     /// <example>
@@ -348,15 +507,21 @@ public abstract record Result<T, TError>
     /// <param name="map">The function used to map the error.</param>
     /// <typeparam name="TMapError">Type of the returning error.</typeparam>
     public Result<T, TMapError> MapError<TMapError>(Func<TError, TMapError> map)
-        where TMapError : notnull
-        => this switch
+        where TMapError : notnull =>
+        this switch
         {
+#if NET11_0_OR_GREATER
+            { _ok: { } ok } => ok,
+            { _error.Value: { } error } => new Error<TMapError>(map(error)),
+#else
             Ok(var ok) => new Result<T, TMapError>.Ok(ok),
             Error(var error) => new Result<T, TMapError>.Error(map(error)),
+#endif
+            _ => throw Uninitialized(),
         };
 
     /// <summary>
-    ///     Returns the contained <see cref="Ok" /> value.
+    ///     Returns the contained <see cref="Ok{T}" /> value.
     ///     Because this function may throw an exception, its use is discouraged. Exceptions are meant for unrecoverable
     ///     errors, and may abort the entire program.
     ///     Instead, prefer to use <see cref="UnwrapOr" />, <see cref="UnwrapOrElse" />, or <see cref="UnwrapOrDefault" />.
@@ -371,12 +536,13 @@ public abstract record Result<T, TError>
     ///     </code>
     /// </example>
     /// <exception cref="InvalidOperationException">
-    ///     In case the result is <see cref="Error" /> with the contained error as message.
+    ///     In case the result is <see cref="Error{T}" /> with the contained error as message.
     /// </exception>
     public T Unwrap() => Unwrap(static e => new InvalidOperationException(e.ToString()));
 
     /// <summary>
-    ///     Returns the contained <see cref="Ok" /> value or throw an exception build by given <paramref name="fn" /> function.
+    ///     Returns the contained <see cref="Ok{T}" /> value or throw an exception build by given <paramref name="fn" />
+    ///     function.
     ///     Because this function may throw an exception, its use is discouraged. Exceptions are meant for unrecoverable
     ///     errors, and may abort the entire program.
     ///     Instead, prefer to use <see cref="UnwrapOr" />, <see cref="UnwrapOrElse" />, or <see cref="UnwrapOrDefault" />.
@@ -393,17 +559,25 @@ public abstract record Result<T, TError>
     ///     </code>
     /// </example>
     /// <param name="fn">The function that builds an exception from contained error.</param>
-    /// <typeparam name="TException">Type of the thrown exception in case of <see cref="Error" />.</typeparam>
+    /// <typeparam name="TException">Type of the thrown exception in case of <see cref="Error{T}" />.</typeparam>
     /// <exception cref="Exception">The exception build by <paramref name="fn" /> from contained error.</exception>
     public T Unwrap<TException>(Func<TError, TException> fn)
-        where TException : Exception => this switch
+        where TException : Exception =>
+        this switch
         {
+#if NET11_0_OR_GREATER
+            { _ok.Value: { } ok } => ok,
+            { _error.Value: { } error } => throw fn(error),
+#else
             Ok(var ok) => ok,
             Error(var error) => throw fn(error),
+#endif
+            _ => throw Uninitialized(),
         };
 
     /// <summary>
-    ///     Returns the contained <see cref="Error" /> value or throw an exception containing the <see cref="Ok" /> value.
+    ///     Returns the contained <see cref="Error{T}" /> value or throw an exception containing the <see cref="Ok{T}" />
+    ///     value.
     /// </summary>
     /// <example>
     ///     <code>
@@ -415,11 +589,12 @@ public abstract record Result<T, TError>
     ///     Assert.Equal("emergency failure", result.UnwrapError());
     ///     </code>
     /// </example>
-    /// <exception cref="InvalidOperationException">An exception containing the <see cref="Ok" /> value as message.</exception>
+    /// <exception cref="InvalidOperationException">An exception containing the <see cref="Ok{T}" /> value as message.</exception>
     public TError UnwrapError() => UnwrapError(static x => new InvalidOperationException(x.ToString()));
 
     /// <summary>
-    ///     Returns the contained <see cref="Error" /> value or throw an exception containing the <see cref="Ok" /> value.
+    ///     Returns the contained <see cref="Error{T}" /> value or throw an exception containing the <see cref="Ok{T}" />
+    ///     value.
     /// </summary>
     /// <example>
     ///     <code>
@@ -434,18 +609,24 @@ public abstract record Result<T, TError>
     ///     </code>
     /// </example>
     /// <exception cref="Exception">
-    ///     Throws an exception of type <typeparamref name="TException" /> in case of <see cref="Ok" />
-    ///     .
+    ///     Throws an exception of type <typeparamref name="TException" /> in case of <see cref="Ok{T}" />.
     /// </exception>
     public TError UnwrapError<TException>(Func<T, TException> fn)
-        where TException : Exception => this switch
+        where TException : Exception =>
+        this switch
         {
+#if NET11_0_OR_GREATER
+            { _ok.Value: { } ok } => throw fn(ok),
+            { _error.Value: { } error } => error,
+#else
             Ok(var ok) => throw fn(ok),
             Error(var error) => error,
+#endif
+            _ => throw Uninitialized(),
         };
 
     /// <summary>
-    ///     Returns the contained <see cref="Ok" /> value or a provided value.
+    ///     Returns the contained <see cref="Ok{T}" /> value or a provided value.
     /// </summary>
     /// <example>
     ///     <code>
@@ -456,11 +637,16 @@ public abstract record Result<T, TError>
     ///     Assert.Equal(2, result.UnwrapOr(2));
     ///     </code>
     /// </example>
-    /// <param name="default">The value returned in case of <see cref="Error" />.</param>
-    public T UnwrapOr(T @default) => this is Ok(var ok) ? ok : @default;
+    /// <param name="default">The value returned in case of <see cref="Error{T}" />.</param>
+    public T UnwrapOr(T @default) =>
+#if NET11_0_OR_GREATER
+        _ok is (var ok) _ ? ok : @default;
+#else
+        this is Ok(var ok) ? ok : @default;
+#endif
 
     /// <summary>
-    ///     Returns the <see cref="Ok" /> value. If <see cref="Error" />, then it returns the <b>default</b> of
+    ///     Returns the <see cref="Ok{T}" /> value. If <see cref="Error{T}" />, then it returns the <b>default</b> of
     ///     <typeparamref name="T" />.
     /// </summary>
     /// <remarks>
@@ -476,10 +662,15 @@ public abstract record Result<T, TError>
     ///     Assert.Equal(0, parse("1909blarg"));
     ///     </code>
     /// </example>
-    public T? UnwrapOrDefault() => this is Ok(var ok) ? ok : default;
+    public T? UnwrapOrDefault() =>
+#if NET11_0_OR_GREATER
+        _ok is (var ok) _ ? ok : default;
+#else
+        this is Ok(var ok) ? ok : default;
+#endif
 
     /// <summary>
-    ///     Returns the <see cref="Ok" /> value or computes it from a function in case of <see cref="Error" />.
+    ///     Returns the <see cref="Ok{T}" /> value or computes it from a function in case of <see cref="Error{T}" />.
     /// </summary>
     /// <example>
     ///     <code>
@@ -493,12 +684,20 @@ public abstract record Result<T, TError>
     ///     </code>
     /// </example>
     /// <param name="op">The function that computes an optional value by taking the error.</param>
-    public T UnwrapOrElse(Func<TError, T> op) => this switch
-    {
-        Ok(var ok) => ok,
-        Error(var error) => op(error),
-    };
+    public T UnwrapOrElse(Func<TError, T> op) =>
+        this  switch
+        {
+#if NET11_0_OR_GREATER
+            { _ok.Value: { } ok } => ok,
+            { _error.Value: { } error } => op(error),
+#else
+            Ok(var ok) => ok,
+            Error(var error) => op(error),
+#endif
+            _ => throw Uninitialized(),
+        };
 
+#if !NET11_0_OR_GREATER
     /// <summary>
     ///     Disregard properties on compiler generated record.
     /// </summary>
@@ -508,13 +707,13 @@ public abstract record Result<T, TError>
     ///     Converts the given OK value into the <see cref="Result{T,TError}.Ok" /> variant that
     ///     contains the underlying success value.
     /// </summary>
-    public static implicit operator Result<T, TError>(Result.Values.Ok<T> ok) => new Ok(ok.Value);
+    public static implicit operator Result<T, TError>(Values.Ok<T> ok) => new Ok(ok.Value);
 
     /// <summary>
     ///     Converts the given ERROR value into the <see cref="Result{T,TError}.Error" /> variant that contains the underlying
     ///     error value.
     /// </summary>
-    public static implicit operator Result<T, TError>(Result.Values.Error<TError> error) => new Error(error.Value);
+    public static implicit operator Result<T, TError>(Values.Error<TError> error) => new Error(error.Value);
 
     /// <summary>
     ///     Represents the successful result of an operation, containing a value of the specified type.
@@ -535,5 +734,5 @@ public abstract record Result<T, TError>
     /// </param>
     public sealed record Error(TError Value) : Result<T, TError>, Error<TError>;
 
-#pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+#endif
 }

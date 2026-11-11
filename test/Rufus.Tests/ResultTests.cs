@@ -7,78 +7,78 @@ public class ResultTests
     [Fact]
     public void GivenAnyOkResult_WhenAnd_AnyOk_ThenShouldReturnBoundOk()
     {
-        Result<int, string> sut = Result.Ok(2);
-        Result<string, string> expected = Result.Ok("different ok");
+        Result<int, string> sut = Any.Ok(2);
+        Result<string, string> expected = Any.Ok("different ok");
 
-        Result<string, string> result = sut.And(expected);
+        var result = sut.And(expected);
 
-        Assert.Equal(expected, result);
+        Assert.Equal(expected: expected, actual: result);
     }
 
     [Fact]
     public void GivenAnyOkResult_WhenAnd_AnyError_ThenShouldReturnBoundError()
     {
-        Result<int, string> sut = Result.Ok(2);
-        Result<string, string> expected = Result.Error("late error");
+        Result<int, string> sut = Any.Ok(2);
+        Result<string, string> expected = Any.Error("late error");
 
-        Result<string, string> result = sut.And(expected);
+        var result = sut.And(expected);
 
-        Assert.Equal(expected, result);
+        Assert.Equal(expected: expected, actual: result);
     }
 
     [Fact]
     public void GivenAnyErrorResult_WhenAnd_AnyOk_ThenShouldReturnSourceError()
     {
-        Result<int, string> sut = Result.Error("early error");
-        Result<string, string> expected = Result.Ok("foo");
+        Result<int, string> sut = Any.Error("early error");
+        Result<string, string> expected = Any.Ok("foo");
 
-        Result<string, string> result = sut.And(expected);
+        var result = sut.And(expected);
 
-        Assert.Equal(Result.Error("early error"), result);
+        Assert.Equal(expected: Any.Error("early error"), actual: result);
     }
 
     [Fact]
     public void GivenAnyErrorResult_WhenAnd_AnyError_ThenShouldReturnSourceError()
     {
-        Result<int, string> sut = Result.Error("not a 2");
-        Result<string, string> expected = Result.Error("late error");
+        Result<int, string> sut = Any.Error("not a 2");
+        Result<string, string> expected = Any.Error("late error");
 
-        Result<string, string> result = sut.And(expected);
+        var result = sut.And(expected);
 
-        Assert.Equal(Result.Error("not a 2"), result);
+        Assert.Equal(expected: Any.Error("not a 2"), actual: result);
     }
 
     [Fact]
     public void GivenAnOkResultAndAnyBindableFunction_WhenAndThen_ThenBoundFunctionShouldBeInvoked()
     {
         const int OK_VALUE = 42;
-        Result<int, string> sut = Result.Ok(OK_VALUE);
-        Result<string, string> expected = Result.Ok("Bound value");
-        Func<int, Result<string, string>> bindableFunction = Substitute.For<Func<int, Result<string, string>>>();
+        Result<int, string> sut = Any.Ok(OK_VALUE);
+        Result<string, string> expected = Any.Ok("Bound value");
+        var bindableFunction = Substitute.For<Func<int, Result<string, string>>>();
         bindableFunction.Invoke(OK_VALUE).Returns(expected);
 
-        Result<string, string> result = sut.AndThen(bindableFunction);
+        var result = sut.AndThen(bindableFunction);
 
-        Assert.Equal(expected, result);
+        Assert.Equal(expected: expected, actual: result);
         bindableFunction.Received().Invoke(OK_VALUE);
     }
 
     [Fact]
     public void GivenAnErrorResultAndAnyBindableFunction_WhenAndThen_ThenBoundFunctionShouldNotBeInvoked()
     {
-        Result<int, string> sut = Result.Error("Expected error");
-        Func<int, Result<string, string>> bindableFunction = Substitute.For<Func<int, Result<string, string>>>();
+        Result<int, string> sut = Any.Error("Expected error");
+        var bindableFunction = Substitute.For<Func<int, Result<string, string>>>();
 
-        Result<string, string> result = sut.AndThen(bindableFunction);
+        var result = sut.AndThen(bindableFunction);
 
-        Assert.Equal(Result.Error("Expected error"), result);
+        Assert.Equal(expected: Any.Error("Expected error"), actual: result);
         bindableFunction.DidNotReceive().Invoke(Arg.Any<int>());
     }
 
     [Fact]
     public void GivenAnOkResult_WhenCheckingIsOk_ThenShouldReturnTrue()
     {
-        Result<int, string> sut = Result.Ok(100);
+        Result<int, string> sut = Any.Ok(100);
 
         Assert.True(sut.IsOk);
     }
@@ -86,7 +86,7 @@ public class ResultTests
     [Fact]
     public void GivenAnErrorResult_WhenCheckingIsOk_ThenShouldReturnFalse()
     {
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
         Assert.False(sut.IsOk);
     }
@@ -94,7 +94,7 @@ public class ResultTests
     [Fact]
     public void GivenAnOkResult_WhenCheckingIsError_ThenShouldReturnFalse()
     {
-        Result<int, string> sut = Result.Ok(100);
+        Result<int, string> sut = Any.Ok(100);
 
         Assert.False(sut.IsError);
     }
@@ -102,7 +102,7 @@ public class ResultTests
     [Fact]
     public void GivenAnErrorResult_WhenCheckingIsError_ThenShouldReturnTrue()
     {
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
         Assert.True(sut.IsError);
     }
@@ -110,9 +110,9 @@ public class ResultTests
     [Fact]
     public void GivenAnOkResult_WhenCheckingIsErrorAndPredicateMatches_ThenShouldReturnFalse()
     {
-        Result<int, string> sut = Result.Ok(50);
+        Result<int, string> sut = Any.Ok(50);
 
-        bool result = sut.IsErrorAnd(_ => true);
+        var result = sut.IsErrorAnd(_ => true);
 
         Assert.False(result);
     }
@@ -120,9 +120,9 @@ public class ResultTests
     [Fact]
     public void GivenAnErrorResult_WhenCheckingIsErrorAndPredicateMatches_ThenShouldReturnTrue()
     {
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
-        bool result = sut.IsErrorAnd(_ => true);
+        var result = sut.IsErrorAnd(_ => true);
 
         Assert.True(result);
     }
@@ -130,9 +130,9 @@ public class ResultTests
     [Fact]
     public void GivenAnErrorResult_WhenCheckingIsErrorAndPredicateDoesNotMatch_ThenShouldReturnFalse()
     {
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
-        bool result = sut.IsErrorAnd(_ => false);
+        var result = sut.IsErrorAnd(_ => false);
 
         Assert.False(result);
     }
@@ -140,9 +140,9 @@ public class ResultTests
     [Fact]
     public void GivenAnOkResult_WhenCheckingIsOkAndPredicateMatches_ThenShouldReturnTrue()
     {
-        Result<int, string> sut = Result.Ok(50);
+        Result<int, string> sut = Any.Ok(50);
 
-        bool result = sut.IsOkAnd(value => value > 0);
+        var result = sut.IsOkAnd(value => value > 0);
 
         Assert.True(result);
     }
@@ -150,9 +150,9 @@ public class ResultTests
     [Fact]
     public void GivenAnOkResult_WhenCheckingIsOkAndPredicateDoesNotMatch_ThenShouldReturnFalse()
     {
-        Result<int, string> sut = Result.Ok(-10);
+        Result<int, string> sut = Any.Ok(-10);
 
-        bool result = sut.IsOkAnd(value => value > 0);
+        var result = sut.IsOkAnd(value => value > 0);
 
         Assert.False(result);
     }
@@ -160,9 +160,9 @@ public class ResultTests
     [Fact]
     public void GivenAnErrorResult_WhenCheckingIsOkAndPredicateMatches_ThenShouldReturnFalse()
     {
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
-        bool result = sut.IsOkAnd(_ => true);
+        var result = sut.IsOkAnd(_ => true);
 
         Assert.False(result);
     }
@@ -170,8 +170,8 @@ public class ResultTests
     [Fact]
     public void GivenAnOkResultAndAnyCallbackFunction_WhenInspect_ThenFunctionShouldBeInvoked()
     {
-        Action<int> callback = Substitute.For<Action<int>>();
-        Result<int, string> sut = Result.Ok(4);
+        var callback = Substitute.For<Action<int>>();
+        Result<int, string> sut = Any.Ok(4);
 
         sut.Inspect(callback);
 
@@ -181,8 +181,8 @@ public class ResultTests
     [Fact]
     public void GivenAnErrorResultAndAnyCallbackFunction_WhenInspect_ThenFunctionShouldNotBeInvoked()
     {
-        Action<int> callback = Substitute.For<Action<int>>();
-        Result<int, string> sut = Result.Error(string.Empty);
+        var callback = Substitute.For<Action<int>>();
+        Result<int, string> sut = Any.Error(string.Empty);
 
         sut.Inspect(callback);
 
@@ -192,8 +192,8 @@ public class ResultTests
     [Fact]
     public void GivenAnOkResultAndAnyCallbackFunction_WhenInspectError_ThenFunctionShouldNotBeInvoked()
     {
-        Action<string> callback = Substitute.For<Action<string>>();
-        Result<int, string> sut = Result.Ok(4);
+        var callback = Substitute.For<Action<string>>();
+        Result<int, string> sut = Any.Ok(4);
 
         sut.InspectError(callback);
 
@@ -203,8 +203,8 @@ public class ResultTests
     [Fact]
     public void GivenAnErrorResultAndAnyCallbackFunction_WhenInspectError_ThenFunctionShouldNotBeInvoked()
     {
-        Action<string> callback = Substitute.For<Action<string>>();
-        Result<int, string> sut = Result.Error("Expected error");
+        var callback = Substitute.For<Action<string>>();
+        Result<int, string> sut = Any.Error("Expected error");
 
         sut.InspectError(callback);
 
@@ -214,278 +214,281 @@ public class ResultTests
     [Fact]
     public void GivenAnOkResult_WhenMap_ThenShouldTransformValue()
     {
-        Result<string, string> sut = Result.Ok("1,2,3,4,5");
+        Result<string, string> sut = Any.Ok("1,2,3,4,5");
 
-        Result<int, string> result =
-            sut.Map(x => x.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).Sum());
+        var result =
+            sut.Map(x => x.
+                Split(separator: ',', options: StringSplitOptions.RemoveEmptyEntries).
+                Select(int.Parse).
+                Sum());
 
-        Assert.Equal(15, Assert.IsType<Result<int, string>.Ok>(result).Value);
+        Assert.Equal(expected: Any.Ok(15), actual: result);
     }
 
     [Fact]
     public void GivenAnErrorResult_WhenMap_ThenShouldReturnErrorUnchanged()
     {
-        Result<string, string> sut = Result.Error("Expected error");
+        Result<string, string> sut = Any.Error("Expected error");
 
-        Result<int, string> result = sut.Map(_ => 0);
+        var result = sut.Map(_ => 0);
 
-        Assert.Equal("Expected error", Assert.IsType<Result<int, string>.Error>(result).Value);
+        Assert.Equal(Any.Error("Expected error"), result);
     }
 
     [Fact]
     public void GivenAnOkResult_WhenMapOr_ThenShouldMapValue()
     {
-        Result<string, string> sut = Result.Ok("foo");
+        Result<string, string> sut = Any.Ok("foo");
 
-        int result = sut.MapOr(x => x.Length, 42);
+        var result = sut.MapOr(map: x => x.Length, @default: 42);
 
-        Assert.Equal(3, result);
+        Assert.Equal(expected: 3, actual: result);
     }
 
     [Fact]
     public void GivenAnErrorResult_WhenMapOr_ThenShouldReturnDefaultValue()
     {
-        Result<string, string> sut = Result.Error("bar");
+        Result<string, string> sut = Any.Error("bar");
 
-        int result = sut.MapOr(x => x.Length, 42);
+        var result = sut.MapOr(map: x => x.Length, @default: 42);
 
-        Assert.Equal(42, result);
+        Assert.Equal(expected: 42, actual: result);
     }
 
     [Fact]
     public void GivenAnOkResult_WhenMapOrElse_ThenShouldMapValue()
     {
-        Result<string, string> sut = Result.Ok("foo");
+        Result<string, string> sut = Any.Ok("foo");
 
-        int result = sut.MapOrElse(x => x.Length, fallback: _ => 42);
+        var result = sut.MapOrElse(map: x => x.Length, fallback: _ => 42);
 
-        Assert.Equal(3, result);
+        Assert.Equal(expected: 3, actual: result);
     }
 
     [Fact]
     public void GivenAnErrorResult_WhenMapOrElse_ThenShouldReturnDefaultValue()
     {
-        Result<string, string> sut = Result.Error("bar");
+        Result<string, string> sut = Any.Error("bar");
 
-        int result = sut.MapOrElse(x => x.Length, _ => 42);
+        var result = sut.MapOrElse(map: x => x.Length, fallback: _ => 42);
 
-        Assert.Equal(42, result);
+        Assert.Equal(expected: 42, actual: result);
     }
 
     [Fact]
     public void GivenAnOkResult_WhenMapError_ThenShouldReturnOkUnchanged()
     {
-        Result<int, int> sut = Result.Ok(2);
+        Result<int, int> sut = Any.Ok(2);
 
-        Result<int, string> result = sut.MapError(static err => $"error code: {err}");
+        var result = sut.MapError(static err => $"error code: {err}");
 
-        Assert.Equal(Result.Ok(2), result);
+        Assert.Equal(expected: Any.Ok(2), actual: result);
     }
 
     [Fact]
     public void GivenAnErrorResult_WhenMapError_ThenShouldTransformErrorValue()
     {
-        Result<int, int> sut = Result.Error(13);
+        Result<int, int> sut = Any.Error(13);
 
-        Result<int, string> result = sut.MapError(static err => $"error code: {err}");
+        var result = sut.MapError(static err => $"error code: {err}");
 
-        Assert.Equal(Result.Error("error code: 13"), result);
+        Assert.Equal(expected: Any.Error("error code: 13"), actual: result);
     }
 
     [Fact]
     public void GivenAnOkResult_WhenOr_ThenShouldReturnOk()
     {
-        Result<int, int> sut = Result.Ok(2);
-        Result<int, string> other = Result.Error("disregarded");
+        Result<int, int> sut = Any.Ok(2);
+        Result<int, string> other = Any.Error("disregarded");
 
-        Result<int, string> result = sut.Or(other);
+        var result = sut.Or(other);
 
-        Assert.Equal(Result.Ok(2), result);
+        Assert.Equal(expected: Any.Ok(2), actual: result);
     }
 
     [Fact]
     public void GivenAnErrorResult_WhenOr_ThenShouldReturnOtherResult()
     {
-        Result<int, int> sut = Result.Error(2);
-        Result<int, string> other = Result.Error("Expected error");
+        Result<int, int> sut = Any.Error(2);
+        Result<int, string> other = Any.Error("Expected error");
 
-        Result<int, string> result = sut.Or(other);
+        var result = sut.Or(other);
 
-        Assert.Equal(other, result);
+        Assert.Equal(expected: other, actual: result);
     }
 
     [Fact]
     public void GivenAnOkResultAndAnyBindableFunction_WhenOrElse_ThenBoundFunctionShouldNotBeInvoked()
     {
-        Result.Values.Ok<int> expected = Result.Ok(2);
-        Result<int, int> sut = Result.Ok(expected.Value);
-        Func<int, Result<int, string>>? op = Substitute.For<Func<int, Result<int, string>>>();
+        var expected = Any.Ok(2);
+        Result<int, int> sut = Any.Ok(expected.Value);
+        var op = Substitute.For<Func<int, Result<int, string>>>();
 
-        Result<int, string> result = sut.OrElse(op);
+        var result = sut.OrElse(op);
 
-        Assert.Equal(expected, result);
+        Assert.Equal(expected: expected, actual: result);
         op.DidNotReceive().Invoke(Arg.Any<int>());
     }
 
     [Fact]
     public void GivenAnErrorResultAndAnyBindableFunction_WhenOrElse_ThenBoundFunctionShouldBeInvoked()
     {
-        Result.Values.Ok<int> expected = Result.Ok(50);
-        Result<int, int> sut = Result.Error(2);
-        Func<int, Result<int, string>> op = Substitute.For<Func<int, Result<int, string>>>();
+        var expected = Any.Ok(50);
+        Result<int, int> sut = Any.Error(2);
+        var op = Substitute.For<Func<int, Result<int, string>>>();
         op.Invoke(Arg.Any<int>()).Returns(expected);
 
-        Result<int, string> result = sut.OrElse(op);
+        var result = sut.OrElse(op);
 
-        Assert.Equal(expected, result);
+        Assert.Equal(expected: expected, actual: result);
         op.Received().Invoke(2);
     }
 
     [Fact]
     public void GivenAnyOkResultWithAnyNestedResult_WhenFlatten_ThenShouldReturnNestedResult()
     {
-        Result<string, int> expected = Result.Error(6);
-        Result<Result<string, int>, int> sut = Result.Ok(expected);
+        Result<string, int> expected = Any.Error(6);
+        Result<Result<string, int>, int> sut = Any.Ok(expected);
 
-        Result<string, int> result = sut.Flatten();
+        var result = sut.Flatten();
 
-        Assert.Equal(expected, result);
+        Assert.Equal(expected: expected, actual: result);
     }
 
     [Fact]
     public void GivenAnyErrorResult_WhenFlatten_ThenShouldReturnSameError()
     {
-        Result<Result<string, int>, int> sut = Result.Error(6);
+        Result<Result<string, int>, int> sut = Any.Error(6);
 
-        Result<string, int> result = sut.Flatten();
+        var result = sut.Flatten();
 
-        Assert.Equal(Result.Error(6), result);
+        Assert.Equal(expected: Any.Error(6), actual: result);
     }
 
     [Fact]
     public void GivenAnyOkResult_WhenUnwrap_ThenShouldReturnOkValue()
     {
-        Result<int, string> sut = Result.Ok(2);
+        Result<int, string> sut = Any.Ok(2);
 
-        int result = sut.Unwrap();
+        var result = sut.Unwrap();
 
-        Assert.Equal(2, result);
+        Assert.Equal(expected: 2, actual: result);
     }
 
     [Fact]
     public void GivenAnyErrorResult_WhenUnwrap_ThenShouldThrowAnInvalidException()
     {
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
-        InvalidOperationException thrownException = Assert.Throws<InvalidOperationException>(() => sut.Unwrap());
+        var thrownException = Assert.Throws<InvalidOperationException>(() => sut.Unwrap());
 
-        Assert.Equal("Expected error", thrownException.Message);
+        Assert.Equal(expected: "Expected error", actual: thrownException.Message);
     }
 
     [Fact]
     public void GivenAnyOkResultAndAnyExceptionFactory_WhenUnwrap_ThenShouldReturnOkValue()
     {
-        Result<int, string> sut = Result.Ok(2);
+        Result<int, string> sut = Any.Ok(2);
 
-        int result = sut.Unwrap<ApplicationException>(_ => throw new ApplicationException("Disregarded"));
+        var result = sut.Unwrap<ApplicationException>(_ => throw new ApplicationException("Disregarded"));
 
-        Assert.Equal(2, result);
+        Assert.Equal(expected: 2, actual: result);
     }
 
     [Fact]
     public void GivenAnyErrorResultAndAnyExceptionFactory_WhenUnwrap_ThenShouldThrowBuiltException()
     {
         var expectedException = new ApplicationException("Thrown: Expected error");
-        Func<string, ApplicationException> exceptionFactory = Substitute.For<Func<string, ApplicationException>>();
+        var exceptionFactory = Substitute.For<Func<string, ApplicationException>>();
         exceptionFactory.Invoke(Arg.Any<string>()).Returns(expectedException);
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
-        ApplicationException receivedException =
+        var receivedException =
             Assert.Throws<ApplicationException>(() => sut.Unwrap(exceptionFactory));
 
-        Assert.Equal(expectedException, receivedException);
+        Assert.Equal(expected: expectedException, actual: receivedException);
         exceptionFactory.Received().Invoke("Expected error");
     }
 
     [Fact]
     public void GivenAnyOkResult_WhenUnwrapError_ThenShouldThrowInvalidOperationException()
     {
-        Result<int, string> sut = Result.Ok(2);
+        Result<int, string> sut = Any.Ok(2);
 
-        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => sut.UnwrapError());
+        var exception = Assert.Throws<InvalidOperationException>(() => sut.UnwrapError());
 
-        Assert.Equal("2", exception.Message);
+        Assert.Equal(expected: "2", actual: exception.Message);
     }
 
     [Fact]
     public void GivenAnyErrorResult_WhenUnwrapError_ThenShouldReturnErrorValue()
     {
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
-        string result = sut.UnwrapError();
+        var result = sut.UnwrapError();
 
-        Assert.Equal("Expected error", result);
+        Assert.Equal(expected: "Expected error", actual: result);
     }
 
     [Fact]
     public void GivenAnyOkResultAndAnyExceptionFactory_WhenUnwrapError_ThenShouldThrowExceptionBuiltByFactory()
     {
         var expectedException = new ApplicationException("Thrown: 2");
-        Result<int, string> sut = Result.Ok(2);
-        Func<int, ApplicationException> exceptionFactory = Substitute.For<Func<int, ApplicationException>>();
+        Result<int, string> sut = Any.Ok(2);
+        var exceptionFactory = Substitute.For<Func<int, ApplicationException>>();
         exceptionFactory.Invoke(2).Throws(expectedException);
 
-        ApplicationException exception = Assert.Throws<ApplicationException>(() => sut.UnwrapError(exceptionFactory));
+        var exception = Assert.Throws<ApplicationException>(() => sut.UnwrapError(exceptionFactory));
 
-        Assert.Equal(expectedException, exception);
+        Assert.Equal(expected: expectedException, actual: exception);
     }
 
     [Fact]
     public void GivenAnyErrorResultAndAnyExceptionFactory_WhenUnwrapError_ThenShouldReturnErrorValue()
     {
-        Result<int, string> sut = Result.Error("Expected error");
+        Result<int, string> sut = Any.Error("Expected error");
 
-        string result = sut.UnwrapError<ApplicationException>(_ => new ApplicationException());
+        var result = sut.UnwrapError<ApplicationException>(_ => new ApplicationException());
 
-        Assert.Equal("Expected error", result);
+        Assert.Equal(expected: "Expected error", actual: result);
     }
 
     [Fact]
     public void GivenAnyOkResultAndAnyDefaultValue_WhenUnwrapOr_ThenShouldReturnOkValue()
     {
-        Result<int, string> sut = Result.Ok(9);
+        Result<int, string> sut = Any.Ok(9);
 
-        int result = sut.UnwrapOr(2);
+        var result = sut.UnwrapOr(2);
 
-        Assert.Equal(9, result);
+        Assert.Equal(expected: 9, actual: result);
     }
 
     [Fact]
     public void GivenAnyErrorResultAndAnyDefaultValue_WhenUnwrapOr_ThenShouldReturnDefaultValue()
     {
-        Result<int, string> sut = Result.Error("error");
+        Result<int, string> sut = Any.Error("error");
 
-        int result = sut.UnwrapOr(2);
+        var result = sut.UnwrapOr(2);
 
-        Assert.Equal(2, result);
+        Assert.Equal(expected: 2, actual: result);
     }
 
     [Fact]
     public void GivenAnyOkResult_WhenUnwrapOrDefault_ThenShouldReturnOkValue()
     {
-        Result<int, string> sut = Result.Ok(2);
+        Result<int, string> sut = Any.Ok(2);
 
-        int result = sut.UnwrapOrDefault();
+        var result = sut.UnwrapOrDefault();
 
-        Assert.Equal(2, result);
+        Assert.Equal(expected: 2, actual: result);
     }
 
     [Fact]
     public void GivenAnyErrorResultOfAnyReferenceType_WhenUnwrapOrDefault_ThenShouldReturnNull()
     {
-        Result<object, string> sut = Result.Error("error");
+        Result<object, string> sut = Any.Error("error");
 
-        object? result = sut.UnwrapOrDefault();
+        var result = sut.UnwrapOrDefault();
 
         Assert.Null(result);
     }
@@ -493,32 +496,32 @@ public class ResultTests
     [Fact]
     public void GivenAnyErrorResultOfAnyValueType_WhenUnwrapOrDefault_ThenShouldReturnDefaultValueType()
     {
-        Result<int, string> sut = Result.Error("error");
+        Result<int, string> sut = Any.Error("error");
 
-        int result = sut.UnwrapOrDefault();
+        var result = sut.UnwrapOrDefault();
 
-        Assert.Equal(0, result);
+        Assert.Equal(expected: 0, actual: result);
     }
 
     [Fact]
     public void GivenAnyOkResultAndAnyOptionalFunction_WhenUnwrapOrElse_ThenShouldReturnOkValue()
     {
-        Result<int, string> sut = Result.Ok(2);
+        Result<int, string> sut = Any.Ok(2);
 
-        int result = sut.UnwrapOrElse(_ => int.MaxValue);
+        var result = sut.UnwrapOrElse(_ => int.MaxValue);
 
-        Assert.Equal(2, result);
+        Assert.Equal(expected: 2, actual: result);
     }
 
     [Fact]
     public void GivenAnyErrorResultAndAnyOptionalFunction_WhenUnwrapOrElse_ThenShouldReturnOptionalFunctionResult()
     {
-        Result<int, string> sut = Result.Error("Expected error");
-        Func<string, int> op = Substitute.For<Func<string, int>>();
+        Result<int, string> sut = Any.Error("Expected error");
+        var op = Substitute.For<Func<string, int>>();
         op.Invoke("Expected error").Returns(int.MaxValue);
 
-        int result = sut.UnwrapOrElse(op);
+        var result = sut.UnwrapOrElse(op);
 
-        Assert.Equal(int.MaxValue, result);
+        Assert.Equal(expected: int.MaxValue, actual: result);
     }
 }

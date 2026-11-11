@@ -17,16 +17,13 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dotnet-version: [ '8.0.x', '10.0.x' ]
-
     steps:
     - uses: actions/checkout@v6
     - name: Setup .NET
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v6
       with:
-        dotnet-version: ${{ matrix.dotnet-version }}
+        dotnet-version: '11.0.x'
+        dotnet-quality: preview
     - name: Install dependencies
       run: dotnet restore
     - name: Build solution
