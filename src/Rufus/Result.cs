@@ -66,13 +66,11 @@ public static class Result
     // ReSharper restore InconsistentNaming
 #pragma warning restore IDE1006 // Naming Styles
 #endif
-#if !NET11_0_OR_GREATER
+
+#if !NET10_0_OR_GREATER
     /// <summary>
     ///     Returns a success results of a void operations, containing an unit value.
     /// </summary>
-#if NET10_0_OR_GREATER
-    [Obsolete("This method will be removed in dotnet 11. Use Result.Ok() instead")]
-#endif
     public static Values.Ok<_> Success() => new();
 
     /// <summary>
@@ -89,9 +87,6 @@ public static class Result
     ///         };
     ///     </code>
     /// </example>
-#if NET10_0_OR_GREATER
-    [Obsolete("This method will be removed in dotnet 11. Use Result.Ok(value) instead")]
-#endif
     public static Values.Ok<T> Success<T>(T value)
         where T : notnull => new(value);
 
@@ -108,11 +103,11 @@ public static class Result
     ///         };
     ///     </code>
     /// </example>
-#if NET10_0_OR_GREATER
-    [Obsolete("This method will be removed in dotnet 11. Use Result.Error(value) instead")]
-#endif
     public static Values.Error<T> Failure<T>(T value)
         where T : notnull => new(value);
+#endif
+
+#if !NET11_0_OR_GREATER
 
     /// <summary>
     ///     Defines default value type implementations of <see cref="Result{T, TError}" /> variants.

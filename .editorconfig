@@ -454,7 +454,7 @@ csharp_default_internal_modifier = explicit
 csharp_arguments_skip_single = true
 csharp_arguments_literal = named
 csharp_arguments_string_literal = named
-csharp_arguments_named = named
+csharp_arguments_named = positional
 csharp_arguments_anonymous_function = named
 csharp_arguments_other = named
 

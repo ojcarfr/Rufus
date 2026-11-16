@@ -10,9 +10,9 @@
         <RepositoryUrl>https://github.com/ojcarfr/Rufus</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Description>Railway Oriented Programming primitives implementation for C# inspired in Rust types.</Description>
-        <PackageTags>RUP union result</PackageTags>
+        <PackageTags>functional discriminated union tags ROP railway result option</PackageTags>
         <RootNamespace>System</RootNamespace>
-        <Version>2.5.0</Version>
+        <Version></Version>
         <Title>Rufus</Title>
     </PropertyGroup>
 

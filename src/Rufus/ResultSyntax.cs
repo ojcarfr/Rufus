@@ -416,7 +416,7 @@ public static class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Ok<T>(var ok) } =>
-                Task.FromResult<Result<T, TMapError>>(Ok<T, TMapError>(ok)),
+                Task.FromResult(Ok<T, TMapError>(ok)),
             { IsCompletedSuccessfully: true, Result: Error<TError>(var error) } => Task.
                 FromResult(op(error)),
             _ => BindAsync(promise: promise, op: op),
@@ -569,7 +569,7 @@ public static class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Ok<T>(var ok) } =>
-                ValueTask.FromResult<Result<T, TMapError>>(Ok<T, TMapError>(ok)),
+                ValueTask.FromResult(Ok<T, TMapError>(ok)),
             { IsCompletedSuccessfully: true, Result: Error<TError>(var error) } =>
                 new ValueTask<Result<T, TMapError>>(op(error)),
             _ => BindAsync(promise: promise, op: op),
