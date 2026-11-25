@@ -130,6 +130,62 @@ public abstract record Option<T>
 #endif
 
     /// <summary>
+    ///     Returns <see cref="None" /> if the option is <see cref="None" />, otherwise returns <paramref name="option" />.
+    /// </summary>
+    /// <remarks>
+    ///     Arguments passed to <see cref="And{TMap}" /> are eagerly evaluated; if you are passing the result of a
+    ///     function call, it is recommended to use <see cref="AndThen{TMap}" />, which is lazily evaluated.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; x = Option.Some(2);
+    ///     Option&lt;string&gt; y = Option.None();
+    ///     Assert.Equal(Option.None(), x.And(y));
+    ///
+    ///     y = Option.Some("foo");
+    ///     Assert.Equal(Option.Some("foo"), x.And(y));
+    ///     </code>
+    /// </example>
+    /// <param name="option">The option to return if the current option is <see cref="Some{T}" />.</param>
+    /// <typeparam name="TMap">Type of the returned option's value.</typeparam>
+    /// <returns>
+    ///     <paramref name="option" /> if <see cref="Some{T}" />, otherwise <see cref="None" />.
+    /// </returns>
+    public Option<TMap> And<TMap>(in Option<TMap> option)
+        where TMap : notnull =>
+#if NET11_0_OR_GREATER
+        HasValue ? option : None.Value;
+#else
+            this is Some ? option : Option<TMap>.None.Value;
+#endif
+
+    /// <summary>
+    ///     Returns <see cref="None" /> if the option is <see cref="None" />, otherwise calls <paramref name="fn" />
+    ///     with the wrapped value and returns the result.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     static Option&lt;string&gt; SqThenToString(int x) =&gt;
+    ///         x &lt;= 1000 ? Option.Some((x * x).ToString()) : Option.None();
+    ///
+    ///     Assert.Equal(Option.Some("4"), Option.Some(2).AndThen(SqThenToString));
+    ///     Assert.Equal(Option.None(), Option.Some(1_000_000).AndThen(SqThenToString));
+    ///     </code>
+    /// </example>
+    /// <param name="fn">The function to invoke with the contained value.</param>
+    /// <typeparam name="TMap">Type of the returned option's value.</typeparam>
+    /// <returns>
+    ///     The result of <paramref name="fn" /> if <see cref="Some{T}" />, otherwise <see cref="None" />.
+    /// </returns>
+    public Option<TMap> AndThen<TMap>(Func<T, Option<TMap>> fn)
+        where TMap : notnull =>
+#if NET11_0_OR_GREATER
+        HasValue ? fn(_value!) : None.Value;
+#else
+            this is Some<T>(var value) ? fn(value) : Option<TMap>.None.Value;
+#endif
+
+    /// <summary>
     ///     Returns the contained <see cref="Some{T}" /> value.
     /// </summary>
     /// <example>
@@ -531,62 +587,6 @@ public abstract record Option<T>
     //         }
     // #endif
     //     }
-    //
-    //     /// <summary>
-    //     ///     Returns <see cref="None" /> if the option is <see cref="None" />, otherwise returns <paramref name="option" />.
-    //     /// </summary>
-    //     /// <remarks>
-    //     ///     Arguments passed to <see cref="And{TMap}" /> are eagerly evaluated; if you are passing the result of a
-    //     ///     function call, it is recommended to use <see cref="AndThen{TMap}" />, which is lazily evaluated.
-    //     /// </remarks>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;int&gt; x = Option.Some(2);
-    //     ///     Option&lt;string&gt; y = Option.None();
-    //     ///     Assert.Equal(Option.None(), x.And(y));
-    //     ///
-    //     ///     y = Option.Some("foo");
-    //     ///     Assert.Equal(Option.Some("foo"), x.And(y));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="option">The option to return if the current option is <see cref="Some{T}" />.</param>
-    //     /// <typeparam name="TMap">Type of the returned option's value.</typeparam>
-    //     /// <returns>
-    //     ///     <paramref name="option" /> if <see cref="Some{T}" />, otherwise <see cref="None" />.
-    //     /// </returns>
-    //     public Option<TMap> And<TMap>(Option<TMap> option)
-    //         where TMap : notnull =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? option : Option.None.Value;
-    // #else
-    //         this is Some<T> ? option : Option<TMap>.None.Value;
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Returns <see cref="None" /> if the option is <see cref="None" />, otherwise calls <paramref name="fn" />
-    //     ///     with the wrapped value and returns the result.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     static Option&lt;string&gt; SqThenToString(int x) =&gt;
-    //     ///         x &lt;= 1000 ? Option.Some((x * x).ToString()) : Option.None();
-    //     ///
-    //     ///     Assert.Equal(Option.Some("4"), Option.Some(2).AndThen(SqThenToString));
-    //     ///     Assert.Equal(Option.None(), Option.Some(1_000_000).AndThen(SqThenToString));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="fn">The function to invoke with the contained value.</param>
-    //     /// <typeparam name="TMap">Type of the returned option's value.</typeparam>
-    //     /// <returns>
-    //     ///     The result of <paramref name="fn" /> if <see cref="Some{T}" />, otherwise <see cref="None" />.
-    //     /// </returns>
-    //     public Option<TMap> AndThen<TMap>(Func<T, Option<TMap>> fn)
-    //         where TMap : notnull =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? fn(_value!) : Option.None.Value;
-    // #else
-    //         this is Some<T>(var value) ? fn(value) : Option<TMap>.None.Value;
-    // #endif
     //
     //     /// <summary>
     //     ///     Returns <see cref="None" /> if the option is <see cref="None" />, otherwise calls

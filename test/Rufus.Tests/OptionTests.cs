@@ -303,6 +303,52 @@ public class OptionTests
         Assert.Equal(0, sut.MapOrDefault(s => s.Length));
     }
 
+    [Fact]
+    public void GivenAnySome_WhenAnd_ThenShouldReturnOtherOption()
+    {
+        Option<int> x = Any.Some(2);
+        Option<string> y = Any.Some("foo");
+        Option<string> none = Any.None();
+
+        Assert.Equal(y, x.And(y));
+        Assert.IsNone(x.And(none));
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenAnd_ThenShouldReturnNone()
+    {
+        Option<int> x = Any.None();
+        Option<string> y = Any.Some("foo");
+
+        Assert.IsNone(x.And(y));
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenAndThen_ThenShouldInvokeBoundFunction()
+    {
+        Option<int> sut = Any.Some(2);
+        var fn = Substitute.For<Func<int, Option<string>>>();
+        Option<string> expected = Any.Some("4");
+        fn.Invoke(2).Returns(expected);
+
+        var result = sut.AndThen(fn);
+
+        Assert.Equal(expected, result);
+        fn.Received(1).Invoke(2);
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenAndThen_ThenShouldReturnNoneWithoutInvokingFunction()
+    {
+        Option<int> sut = Any.None();
+        var fn = Substitute.For<Func<int, Option<string>>>();
+
+        var result = sut.AndThen(fn);
+
+        Assert.IsNone(result);
+        fn.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
     // [Fact]
     // public void GivenAnySome_WhenOkOr_ThenShouldReturnOk()
     // {
@@ -358,52 +404,6 @@ public class OptionTests
     // {
     //     Option<int> sut = Any.None();
     //     Assert.Empty(sut.Iter());
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenAnd_ThenShouldReturnOtherOption()
-    // {
-    //     Option<int> x = Any.Some(2);
-    //     Option<string> y = Any.Some("foo");
-    //     Option<string> none = Any.None();
-    //
-    //     Assert.Equal(y, x.And(y));
-    //     Assert.IsNone(x.And(none));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenAnd_ThenShouldReturnNone()
-    // {
-    //     Option<int> x = Any.None();
-    //     Option<string> y = Any.Some("foo");
-    //
-    //     Assert.IsNone(x.And(y));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenAndThen_ThenShouldInvokeBoundFunction()
-    // {
-    //     Option<int> sut = Any.Some(2);
-    //     var fn = Substitute.For<Func<int, Option<string>>>();
-    //     Option<string> expected = Any.Some("4");
-    //     fn.Invoke(2).Returns(expected);
-    //
-    //     var result = sut.AndThen(fn);
-    //
-    //     Assert.Equal(expected, result);
-    //     fn.Received(1).Invoke(2);
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenAndThen_ThenShouldReturnNoneWithoutInvokingFunction()
-    // {
-    //     Option<int> sut = Any.None();
-    //     var fn = Substitute.For<Func<int, Option<string>>>();
-    //
-    //     var result = sut.AndThen(fn);
-    //
-    //     Assert.IsNone(result);
-    //     fn.DidNotReceive().Invoke(Arg.Any<int>());
     // }
     //
     // [Fact]
