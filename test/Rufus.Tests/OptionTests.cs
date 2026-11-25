@@ -162,147 +162,147 @@ public class OptionTests
         Assert.Equal("bike", sut.UnwrapOr("bike"));
     }
 
-    // [Fact]
-    // public void GivenAnySome_WhenUnwrapOrElse_ThenShouldReturnValueWithoutInvokingFallback()
-    // {
-    //     Option<int> sut = Any.Some(4);
-    //     var fallback = Substitute.For<Func<int>>();
-    //
-    //     var result = sut.UnwrapOrElse(fallback);
-    //
-    //     Assert.Equal(4, result);
-    //     fallback.DidNotReceive().Invoke();
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenUnwrapOrElse_ThenShouldInvokeFallbackAndReturnResult()
-    // {
-    //     Option<int> sut = Any.None();
-    //     var fallback = Substitute.For<Func<int>>();
-    //     fallback.Invoke().Returns(20);
-    //
-    //     var result = sut.UnwrapOrElse(fallback);
-    //
-    //     Assert.Equal(20, result);
-    //     fallback.Received(1).Invoke();
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenUnwrapOrDefault_ThenShouldReturnValue()
-    // {
-    //     Option<int> sut = Any.Some(12);
-    //     Assert.Equal(12, sut.UnwrapOrDefault());
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenUnwrapOrDefault_ThenShouldReturnTypeDefault()
-    // {
-    //     Option<int> intNone = Any.None();
-    //     Option<string> strNone = Any.None();
-    //
-    //     Assert.Equal(0, intNone.UnwrapOrDefault());
-    //     Assert.Null(strNone.UnwrapOrDefault());
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenMap_ThenShouldReturnMappedSome()
-    // {
-    //     Option<string> sut = Any.Some("Hello, World!");
-    //
-    //     var result = sut.Map(s => s.Length);
-    //
-    //     Assert.Equal(13, Assert.IsSome(result).Value);
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenMap_ThenShouldReturnNoneWithoutInvokingMapper()
-    // {
-    //     Option<string> sut = Any.None();
-    //     var mapper = Substitute.For<Func<string, int>>();
-    //
-    //     var result = sut.Map(mapper);
-    //
-    //     Assert.IsNone(result);
-    //     mapper.DidNotReceive().Invoke(Arg.Any<string>());
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenInspect_ThenShouldInvokeActionAndReturnSelf()
-    // {
-    //     Option<int> sut = Any.Some(42);
-    //     var action = Substitute.For<Action<int>>();
-    //
-    //     var result = sut.Inspect(action);
-    //
-    //     Assert.Equal(sut, result);
-    //     action.Received(1).Invoke(42);
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenInspect_ThenShouldNotInvokeActionAndReturnSelf()
-    // {
-    //     Option<int> sut = Any.None();
-    //     var action = Substitute.For<Action<int>>();
-    //
-    //     var result = sut.Inspect(action);
-    //
-    //     Assert.Equal(sut, result);
-    //     action.DidNotReceive().Invoke(Arg.Any<int>());
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenMapOr_ThenShouldReturnMappedValue()
-    // {
-    //     Option<string> sut = Any.Some("foo");
-    //     Assert.Equal(3, sut.MapOr(v => v.Length, 42));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenMapOr_ThenShouldReturnDefault()
-    // {
-    //     Option<string> sut = Any.None();
-    //     Assert.Equal(42, sut.MapOr(v => v.Length, 42));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenMapOrElse_ThenShouldReturnMappedValueWithoutInvokingFallback()
-    // {
-    //     Option<string> sut = Any.Some("foo");
-    //     var fallback = Substitute.For<Func<int>>();
-    //
-    //     var result = sut.MapOrElse(v => v.Length, fallback);
-    //
-    //     Assert.Equal(3, result);
-    //     fallback.DidNotReceive().Invoke();
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenMapOrElse_ThenShouldInvokeFallback()
-    // {
-    //     Option<string> sut = Any.None();
-    //     var fallback = Substitute.For<Func<int>>();
-    //     fallback.Invoke().Returns(42);
-    //
-    //     var result = sut.MapOrElse(v => v.Length, fallback);
-    //
-    //     Assert.Equal(42, result);
-    //     fallback.Received(1).Invoke();
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenMapOrDefault_ThenShouldReturnMappedValue()
-    // {
-    //     Option<string> sut = Any.Some("hi");
-    //     Assert.Equal(2, sut.MapOrDefault(s => s.Length));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenMapOrDefault_ThenShouldReturnTypeDefault()
-    // {
-    //     Option<string> sut = Any.None();
-    //     Assert.Equal(0, sut.MapOrDefault(s => s.Length));
-    // }
-    //
+    [Fact]
+    public void GivenAnySome_WhenUnwrapOrElse_ThenShouldReturnValueWithoutInvokingFallback()
+    {
+        Option<int> sut = Any.Some(4);
+        var fallback = Substitute.For<Func<int>>();
+
+        var result = sut.UnwrapOrElse(fallback);
+
+        Assert.Equal(4, result);
+        fallback.DidNotReceive().Invoke();
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenUnwrapOrElse_ThenShouldInvokeFallbackAndReturnResult()
+    {
+        Option<int> sut = Any.None();
+        var fallback = Substitute.For<Func<int>>();
+        fallback.Invoke().Returns(20);
+
+        var result = sut.UnwrapOrElse(fallback);
+
+        Assert.Equal(20, result);
+        fallback.Received(1).Invoke();
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenUnwrapOrDefault_ThenShouldReturnValue()
+    {
+        Option<int> sut = Any.Some(12);
+        Assert.Equal(12, sut.UnwrapOrDefault());
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenUnwrapOrDefault_ThenShouldReturnTypeDefault()
+    {
+        Option<int> intNone = Any.None();
+        Option<string> strNone = Any.None();
+
+        Assert.Equal(0, intNone.UnwrapOrDefault());
+        Assert.Null(strNone.UnwrapOrDefault());
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenInspect_ThenShouldInvokeActionAndReturnSelf()
+    {
+        Option<int> sut = Any.Some(42);
+        var action = Substitute.For<Action<int>>();
+
+        var result = sut.Inspect(action);
+
+        Assert.Equal(sut, result);
+        action.Received(1).Invoke(42);
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenInspect_ThenShouldNotInvokeActionAndReturnSelf()
+    {
+        Option<int> sut = Any.None();
+        var action = Substitute.For<Action<int>>();
+
+        var result = sut.Inspect(action);
+
+        Assert.Equal(sut, result);
+        action.DidNotReceive().Invoke(Arg.Any<int>());
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenMap_ThenShouldReturnMappedSome()
+    {
+        Option<string> sut = Any.Some("Hello, World!");
+
+        var result = sut.Map(s => s.Length);
+
+        Assert.Equal(13, Assert.IsSome(result).Value);
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenMap_ThenShouldReturnNoneWithoutInvokingMapper()
+    {
+        Option<string> sut = Any.None();
+        var mapper = Substitute.For<Func<string, int>>();
+
+        var result = sut.Map(mapper);
+
+        Assert.IsNone(result);
+        mapper.DidNotReceive().Invoke(Arg.Any<string>());
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenMapOr_ThenShouldReturnMappedValue()
+    {
+        Option<string> sut = Any.Some("foo");
+        Assert.Equal(3, sut.MapOr(v => v.Length, 42));
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenMapOr_ThenShouldReturnDefault()
+    {
+        Option<string> sut = Any.None();
+        Assert.Equal(42, sut.MapOr(v => v.Length, 42));
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenMapOrElse_ThenShouldReturnMappedValueWithoutInvokingFallback()
+    {
+        Option<string> sut = Any.Some("foo");
+        var fallback = Substitute.For<Func<int>>();
+
+        var result = sut.MapOrElse(v => v.Length, fallback);
+
+        Assert.Equal(3, result);
+        fallback.DidNotReceive().Invoke();
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenMapOrElse_ThenShouldInvokeFallback()
+    {
+        Option<string> sut = Any.None();
+        var fallback = Substitute.For<Func<int>>();
+        fallback.Invoke().Returns(42);
+
+        var result = sut.MapOrElse(v => v.Length, fallback);
+
+        Assert.Equal(42, result);
+        fallback.Received(1).Invoke();
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenMapOrDefault_ThenShouldReturnMappedValue()
+    {
+        Option<string> sut = Any.Some("hi");
+        Assert.Equal(2, sut.MapOrDefault(s => s.Length));
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenMapOrDefault_ThenShouldReturnTypeDefault()
+    {
+        Option<string> sut = Any.None();
+        Assert.Equal(0, sut.MapOrDefault(s => s.Length));
+    }
+
     // [Fact]
     // public void GivenAnySome_WhenOkOr_ThenShouldReturnOk()
     // {

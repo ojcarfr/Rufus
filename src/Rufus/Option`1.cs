@@ -107,7 +107,7 @@ public abstract record Option<T>
 #if NET11_0_OR_GREATER
         => HasValue;
 #else
-        => this is Some<T>;
+        => this is Some;
 #endif
 
     /// <summary>
@@ -157,6 +157,33 @@ public abstract record Option<T>
         };
 
     /// <summary>
+    ///     Calls the specified action with the contained value if <see cref="Some{T}" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; x = Option.Some(2).Inspect(v =&gt; Console.WriteLine($"got: {v}"));
+    ///     </code>
+    /// </example>
+    /// <param name="fn">The callback action invoked when <see cref="Some{T}" />.</param>
+    /// <returns>Returns the original option.</returns>
+    public Option<T> Inspect(Action<T> fn)
+    {
+#if NET11_0_OR_GREATER
+        if (HasValue)
+        {
+            fn(_value!);
+        }
+#else
+        if (this is Some(var value))
+        {
+            fn(value);
+        }
+#endif
+
+        return this;
+    }
+
+    /// <summary>
     ///     Checks whether the current option contains a value which matches the predicate.
     /// </summary>
     /// <example>
@@ -180,7 +207,7 @@ public abstract record Option<T>
 #if NET11_0_OR_GREATER
         => HasValue && predicate(_value!);
 #else
-        => this is Some<T>(var value) && predicate(value);
+        => this is Some(var value) && predicate(value);
 #endif
 
     /// <summary>
@@ -204,7 +231,114 @@ public abstract record Option<T>
 #if NET11_0_OR_GREATER
         => !HasValue || predicate(_value!);
 #else
-        => this is not Some<T>(var value) || predicate(value);
+        => this is not Some(var value) || predicate(value);
+#endif
+
+    /// <summary>
+    ///     Maps an <see cref="Option{T}" /> to <see cref="Option{TMap}" /> by applying a function to a contained
+    ///     <see cref="Some{T}" /> value, or returns <see cref="None" /> if the option is <see cref="None" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;string&gt; maybeSomeString = Option.Some("Hello, World!");
+    ///     Option&lt;int&gt; maybeSomeLen = maybeSomeString.Map(s =&gt; s.Length);
+    ///     Assert.Equal(Option.Some(13), maybeSomeLen);
+    ///     </code>
+    /// </example>
+    /// <param name="map">The function used to map the contained value.</param>
+    /// <typeparam name="TMap">Type of the mapped value.</typeparam>
+    /// <returns>
+    ///     A new <see cref="Option{TMap}" /> containing the mapped value if <see cref="Some{T}" />,
+    ///     otherwise <see cref="None" />.
+    /// </returns>
+    public Option<TMap> Map<TMap>(Func<T, TMap> map)
+        where TMap : notnull =>
+#if NET11_0_OR_GREATER
+        HasValue ? new Some<TMap>(map(_value!)) : None.Value;
+#else
+        this is Some(var value) ? new Option<TMap>.Some(map(value)) : Option<TMap>.None.Value;
+#endif
+
+    /// <summary>
+    ///     Returns the provided <paramref name="default" /> result if <see cref="None" />, or applies
+    ///     <paramref name="map" /> to the contained value if <see cref="Some{T}" />.
+    /// </summary>
+    /// <remarks>
+    ///     Arguments passed to <see cref="MapOr{TMap}" /> are eagerly evaluated; if you are passing the result
+    ///     of a function call, it is recommended to use <see cref="MapOrElse{TMap}" />, which is lazily evaluated.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;string&gt; x = Option.Some("foo");
+    ///     Assert.Equal(3, x.MapOr(v =&gt; v.Length, 42));
+    ///
+    ///     x = Option.None();
+    ///     Assert.Equal(42, x.MapOr(v =&gt; v.Length, 42));
+    ///     </code>
+    /// </example>
+    /// <param name="map">The function used to map the contained value.</param>
+    /// <param name="default">The default value returned in case of <see cref="None" />.</param>
+    /// <typeparam name="TMap">Type of the mapped value.</typeparam>
+    /// <returns>
+    ///     The mapped value if <see cref="Some{T}" />, otherwise <paramref name="default" />.
+    /// </returns>
+    public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) =>
+#if NET11_0_OR_GREATER
+        HasValue ? map(_value!) : @default;
+#else
+            this is Some(var value) ? map(value) : @default;
+#endif
+
+    /// <summary>
+    ///     Computes a default function result if <see cref="None" />, or applies <paramref name="map" />
+    ///     to the contained value if <see cref="Some{T}" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     int k = 21;
+    ///     Option&lt;string&gt; x = Option.Some("foo");
+    ///     Assert.Equal(3, x.MapOrElse(v =&gt; v.Length, () =&gt; 2 * k));
+    ///
+    ///     x = Option.None();
+    ///     Assert.Equal(42, x.MapOrElse(v =&gt; v.Length, () =&gt; 2 * k));
+    ///     </code>
+    /// </example>
+    /// <param name="map">The function used to map the contained value.</param>
+    /// <param name="fallback">The function used to compute a fallback value in case of <see cref="None" />.</param>
+    /// <typeparam name="TMap">Type of the mapped value.</typeparam>
+    /// <returns>
+    ///     The mapped value if <see cref="Some{T}" />, otherwise the result of <paramref name="fallback" />.
+    /// </returns>
+    public TMap MapOrElse<TMap>(Func<T, TMap> map, Func<TMap> fallback) =>
+#if NET11_0_OR_GREATER
+        HasValue ? map(_value!) : fallback();
+#else
+            this is Some(var value) ? map(value) : fallback();
+#endif
+
+    /// <summary>
+    ///     Maps an <see cref="Option{T}" /> to <typeparamref name="TMap" /> by applying <paramref name="map" />
+    ///     to the contained value if <see cref="Some{T}" />, otherwise returns the default value for
+    ///     <typeparamref name="TMap" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;string&gt; x = Option.Some("hi");
+    ///     Option&lt;string&gt; y = Option.None();
+    ///     Assert.Equal(2, x.MapOrDefault(s =&gt; s.Length));
+    ///     Assert.Equal(0, y.MapOrDefault(s =&gt; s.Length));
+    ///     </code>
+    /// </example>
+    /// <param name="map">The function used to map the contained value.</param>
+    /// <typeparam name="TMap">Type of the mapped value.</typeparam>
+    /// <returns>
+    ///     The mapped value if <see cref="Some{T}" />, otherwise <c>default(TMap)</c>.
+    /// </returns>
+    public TMap? MapOrDefault<TMap>(Func<T, TMap> map) =>
+#if NET11_0_OR_GREATER
+        HasValue ? map(_value!) : default;
+#else
+            this is Some(var value) ? map(value) : default;
 #endif
 
     /// <summary>
@@ -231,219 +365,81 @@ public abstract record Option<T>
     public T Unwrap()
     {
 #if NET11_0_OR_GREATER
-        if (HasValue)
-        {
-            return _value!;
-        }
+        return HasValue
+            ? _value!
 #else
-        if (this is Some<T>(var value))
-        {
-            return value;
-        }
+        return this is Some(var value)
+            ? value
 #endif
-
-        throw new InvalidOperationException("Cannot unwrap a None option");
+            : throw new InvalidOperationException("Cannot unwrap a None option");
     }
 
-        /// <summary>
-        ///     Returns the contained <see cref="Some{T}" /> value or a provided default.
-        /// </summary>
-        /// <remarks>
-        ///     Arguments passed to <see cref="UnwrapOr" /> are eagerly evaluated; if you are passing the result
-        ///     of a function call, it is recommended to use <see cref="UnwrapOrElse" />, which is lazily evaluated.
-        /// </remarks>
-        /// <example>
-        ///     <code>
-        ///     Assert.Equal("car", Option.Some("car").UnwrapOr("bike"));
-        ///     Assert.Equal("bike", Option&lt;string&gt;.None.Value.UnwrapOr("bike"));
-        ///     </code>
-        /// </example>
-        /// <param name="default">The default value returned in case of <see cref="None" />.</param>
-        /// <returns>The contained value if <see cref="Some{T}" />, otherwise <paramref name="default" />.</returns>
-        public T UnwrapOr(T @default) =>
-    #if NET11_0_OR_GREATER
-            HasValue ? _value! : @default;
-    #else
-            this is Some<T>(var value) ? value : @default;
-    #endif
+    /// <summary>
+    ///     Returns the contained <see cref="Some{T}" /> value or a provided default.
+    /// </summary>
+    /// <remarks>
+    ///     Arguments passed to <see cref="UnwrapOr" /> are eagerly evaluated; if you are passing the result
+    ///     of a function call, it is recommended to use <see cref="UnwrapOrElse" />, which is lazily evaluated.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Assert.Equal("car", Option.Some("car").UnwrapOr("bike"));
+    ///     Assert.Equal("bike", Option&lt;string&gt;.None.Value.UnwrapOr("bike"));
+    ///     </code>
+    /// </example>
+    /// <param name="default">The default value returned in case of <see cref="None" />.</param>
+    /// <returns>The contained value if <see cref="Some{T}" />, otherwise <paramref name="default" />.</returns>
+    public T UnwrapOr(T @default) =>
+#if NET11_0_OR_GREATER
+        HasValue ? _value! : @default;
+#else
+        this is Some(var value) ? value : @default;
+#endif
 
-    //     /// <summary>
-    //     ///     Returns the contained <see cref="Some{T}" /> value or computes it from a closure.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     int k = 10;
-    //     ///     Assert.Equal(4, Option.Some(4).UnwrapOrElse(() =&gt; 2 * k));
-    //     ///     Assert.Equal(20, Option&lt;int&gt;.None.Value.UnwrapOrElse(() =&gt; 2 * k));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="op">The function that computes a fallback value in case of <see cref="None" />.</param>
-    //     /// <returns>The contained value if <see cref="Some{T}" />, otherwise the result of <paramref name="op" />.</returns>
-    //     public T UnwrapOrElse(Func<T> op) =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? _value! : op();
-    // #else
-    //         this is Some<T>(var value) ? value : op();
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Returns the contained <see cref="Some{T}" /> value or the default value of <typeparamref name="T" />.
-    //     /// </summary>
-    //     /// <remarks>
-    //     ///     Take in account that, although <typeparamref name="T" /> is defined as <c>notnull</c>, this method can return
-    //     ///     <c>null</c> when <typeparamref name="T" /> is a reference type.
-    //     /// </remarks>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;int&gt; x = Option.None();
-    //     ///     Option&lt;int&gt; y = Option.Some(12);
-    //     ///     Assert.Equal(0, x.UnwrapOrDefault());
-    //     ///     Assert.Equal(12, y.UnwrapOrDefault());
-    //     ///     </code>
-    //     /// </example>
-    //     /// <returns>
-    //     ///     The contained value if <see cref="Some{T}" />, otherwise <c>default(T)</c>.
-    //     /// </returns>
-    //     public T? UnwrapOrDefault() =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? _value! : default;
-    // #else
-    //         this is Some<T>(var value) ? value : default;
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Maps an <see cref="Option{T}" /> to <see cref="Option{TMap}" /> by applying a function to a contained
-    //     ///     <see cref="Some{T}" /> value, or returns <see cref="None" /> if the option is <see cref="None" />.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;string&gt; maybeSomeString = Option.Some("Hello, World!");
-    //     ///     Option&lt;int&gt; maybeSomeLen = maybeSomeString.Map(s =&gt; s.Length);
-    //     ///     Assert.Equal(Option.Some(13), maybeSomeLen);
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="map">The function used to map the contained value.</param>
-    //     /// <typeparam name="TMap">Type of the mapped value.</typeparam>
-    //     /// <returns>
-    //     ///     A new <see cref="Option{TMap}" /> containing the mapped value if <see cref="Some{T}" />,
-    //     ///     otherwise <see cref="None" />.
-    //     /// </returns>
-    //     public Option<TMap> Map<TMap>(Func<T, TMap> map)
-    //         where TMap : notnull =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? new Some<TMap>(map(_value!)) : Option.None.Value;
-    // #else
-    //         this is Some<T>(var value) ? new Option<TMap>.Some(map(value)) : Option<TMap>.None.Value;
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Calls the specified action with the contained value if <see cref="Some{T}" />.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;int&gt; x = Option.Some(2).Inspect(v =&gt; Console.WriteLine($"got: {v}"));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="fn">The callback action invoked when <see cref="Some{T}" />.</param>
-    //     /// <returns>Returns the original option.</returns>
-    //     public Option<T> Inspect(Action<T> fn)
-    //     {
-    // #if NET11_0_OR_GREATER
-    //         if (HasValue)
-    //         {
-    //             fn(_value!);
-    //         }
-    // #else
-    //         if (this is Some<T>(var value))
-    //         {
-    //             fn(value);
-    //         }
-    // #endif
-    //
-    //         return this;
-    //     }
-    //
-    //     /// <summary>
-    //     ///     Returns the provided <paramref name="default" /> result if <see cref="None" />, or applies
-    //     ///     <paramref name="map" /> to the contained value if <see cref="Some{T}" />.
-    //     /// </summary>
-    //     /// <remarks>
-    //     ///     Arguments passed to <see cref="MapOr{TMap}" /> are eagerly evaluated; if you are passing the result
-    //     ///     of a function call, it is recommended to use <see cref="MapOrElse{TMap}" />, which is lazily evaluated.
-    //     /// </remarks>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;string&gt; x = Option.Some("foo");
-    //     ///     Assert.Equal(3, x.MapOr(v =&gt; v.Length, 42));
-    //     ///
-    //     ///     x = Option.None();
-    //     ///     Assert.Equal(42, x.MapOr(v =&gt; v.Length, 42));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="map">The function used to map the contained value.</param>
-    //     /// <param name="default">The default value returned in case of <see cref="None" />.</param>
-    //     /// <typeparam name="TMap">Type of the mapped value.</typeparam>
-    //     /// <returns>
-    //     ///     The mapped value if <see cref="Some{T}" />, otherwise <paramref name="default" />.
-    //     /// </returns>
-    //     public TMap MapOr<TMap>(Func<T, TMap> map, TMap @default) =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? map(_value!) : @default;
-    // #else
-    //         this is Some<T>(var value) ? map(value) : @default;
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Computes a default function result if <see cref="None" />, or applies <paramref name="map" />
-    //     ///     to the contained value if <see cref="Some{T}" />.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     int k = 21;
-    //     ///     Option&lt;string&gt; x = Option.Some("foo");
-    //     ///     Assert.Equal(3, x.MapOrElse(v =&gt; v.Length, () =&gt; 2 * k));
-    //     ///
-    //     ///     x = Option.None();
-    //     ///     Assert.Equal(42, x.MapOrElse(v =&gt; v.Length, () =&gt; 2 * k));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="map">The function used to map the contained value.</param>
-    //     /// <param name="fallback">The function used to compute a fallback value in case of <see cref="None" />.</param>
-    //     /// <typeparam name="TMap">Type of the mapped value.</typeparam>
-    //     /// <returns>
-    //     ///     The mapped value if <see cref="Some{T}" />, otherwise the result of <paramref name="fallback" />.
-    //     /// </returns>
-    //     public TMap MapOrElse<TMap>(Func<T, TMap> map, Func<TMap> fallback) =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? map(_value!) : fallback();
-    // #else
-    //         this is Some<T>(var value) ? map(value) : fallback();
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Maps an <see cref="Option{T}" /> to <typeparamref name="TMap" /> by applying <paramref name="map" />
-    //     ///     to the contained value if <see cref="Some{T}" />, otherwise returns the default value for
-    //     ///     <typeparamref name="TMap" />.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;string&gt; x = Option.Some("hi");
-    //     ///     Option&lt;string&gt; y = Option.None();
-    //     ///     Assert.Equal(2, x.MapOrDefault(s =&gt; s.Length));
-    //     ///     Assert.Equal(0, y.MapOrDefault(s =&gt; s.Length));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="map">The function used to map the contained value.</param>
-    //     /// <typeparam name="TMap">Type of the mapped value.</typeparam>
-    //     /// <returns>
-    //     ///     The mapped value if <see cref="Some{T}" />, otherwise <c>default(TMap)</c>.
-    //     /// </returns>
-    //     public TMap? MapOrDefault<TMap>(Func<T, TMap> map) =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? map(_value!) : default;
-    // #else
-    //         this is Some<T>(var value) ? map(value) : default;
-    // #endif
+    /// <summary>
+    ///     Returns the contained <see cref="Some{T}" /> value or computes it from a closure.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     int k = 10;
+    ///     Assert.Equal(4, Option.Some(4).UnwrapOrElse(() =&gt; 2 * k));
+    ///     Assert.Equal(20, Option&lt;int&gt;.None.Value.UnwrapOrElse(() =&gt; 2 * k));
+    ///     </code>
+    /// </example>
+    /// <param name="op">The function that computes a fallback value in case of <see cref="None" />.</param>
+    /// <returns>The contained value if <see cref="Some{T}" />, otherwise the result of <paramref name="op" />.</returns>
+    public T UnwrapOrElse(Func<T> op) =>
+#if NET11_0_OR_GREATER
+        HasValue ? _value! : op();
+#else
+        this is Some(var value) ? value : op();
+#endif
+
+    /// <summary>
+    ///     Returns the contained <see cref="Some{T}" /> value or the default value of <typeparamref name="T" />.
+    /// </summary>
+    /// <remarks>
+    ///     Take in account that, although <typeparamref name="T" /> is defined as <c>notnull</c>, this method can return
+    ///     <c>null</c> when <typeparamref name="T" /> is a reference type.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; x = Option.None();
+    ///     Option&lt;int&gt; y = Option.Some(12);
+    ///     Assert.Equal(0, x.UnwrapOrDefault());
+    ///     Assert.Equal(12, y.UnwrapOrDefault());
+    ///     </code>
+    /// </example>
+    /// <returns>
+    ///     The contained value if <see cref="Some{T}" />, otherwise <c>default(T)</c>.
+    /// </returns>
+    public T? UnwrapOrDefault() =>
+#if NET11_0_OR_GREATER
+        HasValue ? _value! : default;
+#else
+        this is Some(var value) ? value : default;
+#endif
+
     //
     //     /// <summary>
     //     ///     Transforms the <see cref="Option{T}" /> into a <see cref="Result{T, TError}" />, mapping
