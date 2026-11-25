@@ -420,6 +420,7 @@ csharp_empty_block_style = together_same_line
 csharp_for_built_in_types = use_var_when_evident
 csharp_for_simple_types = use_var_when_evident
 csharp_for_other_types = use_var_when_evident
+csharp_use_roslyn_logic_for_evident_types = true
 
 # use separate declarations for deconstructed variables
 csharp_prefer_separate_deconstructed_variables_declaration = true

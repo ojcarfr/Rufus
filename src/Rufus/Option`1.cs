@@ -90,4 +90,93 @@ public abstract record Option<T>
     public static implicit operator Option<T>(Option.Values.None _) => None.Value;
 
 #endif
+
+    /// <summary>
+    ///     Checks whether current option contains some value.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    /// Option&lt;int> x = Option.Some(2);
+    /// Assert.True(x.IsSome);
+    ///
+    /// x = Option.None();
+    /// Assert.False(x.IsSome);
+    ///     </code>
+    /// </example>
+    public bool IsSome
+#if NET11_0_OR_GREATER
+        => HasValue;
+#else
+        => this is Some<T>;
+#endif
+
+    /// <summary>
+    ///     Checks whether current option contains no value.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    /// Option&lt;int> x = Option.Some(2);
+    /// Assert.False(x.IsNone);
+    ///
+    /// x = Option.None();
+    /// Assert.True(x.IsNone);
+    ///     </code>
+    /// </example>
+    public bool IsNone
+#if NET11_0_OR_GREATER
+        => !HasValue;
+#else
+        => this is None;
+#endif
+
+    /// <summary>
+    ///     Checks whether the current option contains a value which matches the predicate.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; = Option.Some(2);
+    ///     Assert.True(x.IsSomeAnd(x =&gt; x &gt; 1);
+    ///
+    ///     x = Option.Some(0);
+    ///     Assert.False(x.IsSomeAnd(x =&gt; x &gt; 1);
+    ///
+    ///     x = Option.None();
+    ///     Assert.False(x.IsSomeAnd(x =&gt; x &gt; 1);
+    ///     </code>
+    /// </example>
+    /// <param name="predicate">The predicate the value should match.</param>
+    /// <returns>
+    ///     <c>true</c> if the option is <see cref="Some{T}" /> and the value inside of it matches
+    ///     <paramref name="predicate" />.
+    /// </returns>
+    public bool IsSomeAnd(Func<T, bool> predicate)
+#if NET11_0_OR_GREATER
+        => HasValue && predicate(_value!);
+#else
+        => this is Some<T>(var value) && predicate(value);
+#endif
+
+    /// <summary>
+    ///     Checks whether current option contains no value or value matches specified predicate.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; x = Option.Some(2);
+    ///     Assert.True(x =&gt; x &gt; 1);
+    ///
+    ///     x = Option.Some(0);
+    ///     Assert.False(x =&gt; x &gt; 1);
+    ///
+    ///     x = Option.None();
+    ///     Assert.True(x =&gt; x &gt; 1);
+    ///     </code>
+    /// </example>
+    /// <param name="predicate"></param>
+    /// <returns></returns>
+    public bool IsNoneOr(Func<T, bool> predicate)
+#if NET11_0_OR_GREATER
+        => !HasValue || predicate(_value!);
+#else
+        => this is not Some<T>(var value) || predicate(value);
+#endif
 }
