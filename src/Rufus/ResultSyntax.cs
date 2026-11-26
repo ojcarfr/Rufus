@@ -416,7 +416,7 @@ public static class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Ok<T>(var ok) } =>
-                Task.FromResult<Result<T, TMapError>>(Ok<T, TMapError>(ok)),
+                Task.FromResult(Ok<T, TMapError>(ok)),
             { IsCompletedSuccessfully: true, Result: Error<TError>(var error) } => Task.
                 FromResult(op(error)),
             _ => BindAsync(promise: promise, op: op),
@@ -569,7 +569,7 @@ public static class ResultSyntax
         return promise switch
         {
             { IsCompletedSuccessfully: true, Result: Ok<T>(var ok) } =>
-                ValueTask.FromResult<Result<T, TMapError>>(Ok<T, TMapError>(ok)),
+                ValueTask.FromResult(Ok<T, TMapError>(ok)),
             { IsCompletedSuccessfully: true, Result: Error<TError>(var error) } =>
                 new ValueTask<Result<T, TMapError>>(op(error)),
             _ => BindAsync(promise: promise, op: op),
@@ -660,6 +660,32 @@ public static class ResultSyntax
             };
     }
 
+    /// <summary>
+    ///     Converts current <see cref="Result{T,TError}" /> into an <see cref="Option{T}" />, and converting the error to
+    ///     <see cref="Option.None" />, if any.
+    /// </summary>
+    public static Option<T> Ok<T, TError>(this Result<T, TError> result)
+        where T : notnull
+        where TError : notnull
+#if NET11_0_OR_GREATER
+        => result is Ok<T>({ } value) ? new Option.Some<T>(value) : Option.None.Value;
+#else
+        => result is Ok<T>({ } value) ? new Option.Values.Some<T>(value) : Option.Values.None.Value;
+#endif
+
+    /// <summary>
+    ///     Converts the current <see cref="Result{T,TError}" /> into an <see cref="Option{T}" />, and discarding the success
+    ///     value, if any.
+    /// </summary>
+    public static Option<TError> Err<T, TError>(this Result<T, TError> result)
+        where T : notnull
+        where TError : notnull
+#if NET11_0_OR_GREATER
+        => result is Error<TError>({ } error) ? new Option.Some<TError>(error) :  Option.None.Value;
+#else
+        => result is Error<TError>({ } error) ? new Option.Values.Some<TError>(error) : Option.Values.None.Value;
+#endif
+
     private static Result<TOk, TError> Ok<TOk, TError>(TOk value)
         where TOk : notnull
         where TError : notnull =>
@@ -667,6 +693,7 @@ public static class ResultSyntax
         new Ok<TOk>(value);
 #else
         new Result<TOk, TError>.Ok(value);
+
 #endif
 
     private static Result<TOk, TError> Error<TOk, TError>(TError value)

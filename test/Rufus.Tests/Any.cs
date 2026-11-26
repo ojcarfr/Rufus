@@ -18,8 +18,29 @@ public static class Any
 #endif
         where T : notnull => new(value);
 
+#if NET11_0_OR_GREATER
+    public static Option.Some<T> Some<T>(T value)
+#else
+    public static Option.Values.Some<T> Some<T>(T value)
+#endif
+        where T : notnull => new(value);
+
+#if NET11_0_OR_GREATER
+    public static Option.None None() => Option.None.Value;
+#else
+    public static Option.Values.None None() => Option.Values.None.Value;
+#endif
+
     public static class Completed
     {
+        public static Promise<T> Promise<T>(Option<T> option)
+            where T : notnull
+            => new Promise<T>.Completed(option);
+
+        public static Promise<T> Promise<T>(Exception exception)
+            where T : notnull
+            => new Promise<T>.Completed(exception);
+
         public static Promise<T, TError> Promise<T, TError>(Result<T, TError> result)
             where T : notnull
             where TError : notnull
@@ -33,6 +54,14 @@ public static class Any
 
     public static class Pending
     {
+        public static Promise<T> Promise<T>(Option<T> option)
+            where T : notnull
+            => new Promise<T>.Pending(option);
+
+        public static Promise<T> Promise<T>(Exception exception)
+            where T : notnull
+            => new Promise<T>.Pending(exception);
+
         public static Promise<T, TError> Promise<T, TError>(Result<T, TError> result)
             where T : notnull
             where TError : notnull

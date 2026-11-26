@@ -10,10 +10,10 @@
         <RepositoryUrl>https://github.com/ojcarfr/Rufus</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Description>Railway Oriented Programming primitives implementation for C# inspired in Rust types.</Description>
-        <PackageTags>RUP union result</PackageTags>
+        <PackageTags>functional discriminated union tags ROP railway result option</PackageTags>
         <RootNamespace>System</RootNamespace>
-        <Version>2.5.0</Version>
         <Title>Rufus</Title>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +22,7 @@
 
     <ItemGroup>
         <None Include="shinkansen.png" Pack="True" PackagePath="\"/>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>

@@ -229,4 +229,36 @@ public partial class ResultSyntaxTests
         Assert.Equal(expected: Any.Ok(OK_VALUE), actual: result);
         await fn.DidNotReceive().Invoke(Arg.Any<string>());
     }
+
+    [Fact]
+    public void GivenAnySucceedResult_WhenOk_ThenShouldReturnSome()
+    {
+        Result<int, string> sut = Any.Ok(OK_VALUE);
+        var result = sut.Ok();
+        Assert.Equal(OK_VALUE, Assert.IsSome(result).Value);
+    }
+
+    [Fact]
+    public void GivenAnyFailedResult_WhenOk_ThenShouldReturnNone()
+    {
+        Result<int, string> sut = Any.Error(EXPECTED_ERROR);
+        var result = sut.Ok();
+        Assert.IsNone(result);
+    }
+
+    [Fact]
+    public void GivenAnySucceedResult_WhenErr_ThenShouldReturnNone()
+    {
+        Result<int, string> sut = Any.Ok(OK_VALUE);
+        var result = sut.Err();
+        Assert.IsNone(result);
+    }
+
+    [Fact]
+    public void GivenAnyFailedResult_WhenErr_ThenShouldReturnSome()
+    {
+        Result<int, string> sut = Any.Error(EXPECTED_ERROR);
+        var result = sut.Err();
+        Assert.Equal(EXPECTED_ERROR, Assert.IsSome(result).Value);
+    }
 }
