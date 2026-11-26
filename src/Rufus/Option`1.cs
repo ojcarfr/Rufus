@@ -475,6 +475,43 @@ public abstract record Option<T>
 #endif
 
     /// <summary>
+    ///     Reduces two options into one, using <paramref name="fn" /> if both are <see cref="Some{T}" />.
+    ///     If only one of <c>this</c> and <paramref name="other" /> is <see cref="Some{T}" />, that one is returned.
+    ///     If both are <see cref="None" />, <see cref="None" /> is returned.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; s12 = Option.Some(12);
+    ///     Option&lt;int&gt; s17 = Option.Some(17);
+    ///     Option&lt;int&gt; n = Option.None();
+    ///     Func&lt;int, int, int&gt; f = (a, b) =&gt; a + b;
+    ///
+    ///     Assert.Equal(Option.Some(29), s12.Reduce(s17, f));
+    ///     Assert.Equal(Option.Some(12), s12.Reduce(n, f));
+    ///     Assert.Equal(Option.Some(17), n.Reduce(s17, f));
+    ///     Assert.Equal(Option.None(), n.Reduce(n, f));
+    ///     </code>
+    /// </example>
+    /// <param name="other">The other option to reduce with.</param>
+    /// <param name="fn">The function used to combine both values when both are <see cref="Some{T}" />.</param>
+    /// <returns>The reduced option.</returns>
+    public Option<T> Reduce(Option<T> other, Func<T, T, T> fn) =>
+        (this, other) switch
+        {
+#if NET11_0_OR_GREATER
+            ({ HasValue: true, _value: var s }, { HasValue: true, _value: var o }) => new Some<T>(fn(s!, o!)),
+            ({ HasValue: true }, _) => this,
+            (_, { HasValue: true }) => other,
+            _ => None.Value,
+#else
+                (Some<T>(var s), Some<T>(var o)) => new Some(fn(s, o)),
+                (Some<T>, _) => this,
+                (_, Some<T>) => other,
+                _ => None.Value,
+#endif
+        };
+
+    /// <summary>
     ///     Returns the contained <see cref="Some{T}" /> value.
     /// </summary>
     /// <remarks>
@@ -597,9 +634,74 @@ public abstract record Option<T>
             (false, true) => option,
             _ =>
 #if NET11_0_OR_GREATER
-                    Option.None.Value,
+                None.Value,
 #else
                 None.Value,
+#endif
+        };
+
+    /// <summary>
+    ///     Makes a tuple of the value in <c>this</c> and the value in <paramref name="other" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; x = Option.Some(1);
+    ///     Option&lt;string&gt; y = Option.Some("hi");
+    ///     Option&lt;byte&gt; z = Option.None();
+    ///
+    ///     Assert.Equal(Option.Some((1, "hi")), x.Zip(y));
+    ///     Assert.Equal(Option.None(), x.Zip(z));
+    ///     </code>
+    /// </example>
+    /// <param name="other">The other option to zip with.</param>
+    /// <typeparam name="TOther">Type of the other option's value.</typeparam>
+    /// <returns>
+    ///     <see cref="Some{T}" /> containing <c>(s, o)</c> if both options are <see cref="Some{T}" />,
+    ///     otherwise <see cref="None" />.
+    /// </returns>
+    public Option<(T, TOther)> Zip<TOther>(Option<TOther> other)
+        where TOther : notnull =>
+        (this, other) switch
+        {
+#if NET11_0_OR_GREATER
+            ({ HasValue: true, _value: var s }, { HasValue: true, _value: var o }) => new Some<(T, TOther)>((s!, o!)),
+            _ => None.Value,
+#else
+            (Some<T>(var s), Some<TOther>(var o)) => new Option<(T, TOther)>.Some((s, o)),
+            _ => Option<(T, TOther)>.None.Value,
+#endif
+        };
+
+    /// <summary>
+    ///     Combines the value in <c>this</c> with the value in <paramref name="other" />, using <paramref name="fn" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;double&gt; x = Option.Some(17.5);
+    ///     Option&lt;double&gt; y = Option.Some(42.7);
+    ///     Assert.Equal(Option.Some((17.5, 42.7)), x.ZipWith(y, (a, b) =&gt; (a, b)));
+    ///     Assert.Equal(Option.None(), x.ZipWith(Option&lt;double&gt;.None.Value, (a, b) =&gt; (a, b)));
+    ///     </code>
+    /// </example>
+    /// <param name="other">The other option to combine with.</param>
+    /// <param name="fn">The function used to combine both values.</param>
+    /// <typeparam name="TOther">Type of the other option's value.</typeparam>
+    /// <typeparam name="TResult">Type of the combined value.</typeparam>
+    /// <returns>
+    ///     <see cref="Some{T}" /> containing <c>fn(s, o)</c> if both options are <see cref="Some{T}" />,
+    ///     otherwise <see cref="None" />.
+    /// </returns>
+    public Option<TResult> ZipWith<TOther, TResult>(Option<TOther> other, Func<T, TOther, TResult> fn)
+        where TOther : notnull
+        where TResult : notnull =>
+        (this, other) switch
+        {
+#if NET11_0_OR_GREATER
+            ({ HasValue: true, _value: var s }, { HasValue: true, _value: var o }) => new Some<TResult>(fn(s!, o!)),
+            _ => None.Value,
+#else
+            (Some<T>(var s), Some<TOther>(var o)) => new Option<TResult>.Some(fn(s, o)),
+            _ => Option<TResult>.None.Value,
 #endif
         };
 
@@ -694,106 +796,4 @@ public abstract record Option<T>
     //         }
     // #endif
     //     }
-
-    //     /// <summary>
-    //     ///     Makes a tuple of the value in <c>this</c> and the value in <paramref name="other" />.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;int&gt; x = Option.Some(1);
-    //     ///     Option&lt;string&gt; y = Option.Some("hi");
-    //     ///     Option&lt;byte&gt; z = Option.None();
-    //     ///
-    //     ///     Assert.Equal(Option.Some((1, "hi")), x.Zip(y));
-    //     ///     Assert.Equal(Option.None(), x.Zip(z));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="other">The other option to zip with.</param>
-    //     /// <typeparam name="TOther">Type of the other option's value.</typeparam>
-    //     /// <returns>
-    //     ///     <see cref="Some{T}" /> containing <c>(s, o)</c> if both options are <see cref="Some{T}" />,
-    //     ///     otherwise <see cref="None" />.
-    //     /// </returns>
-    //     public Option<(T, TOther)> Zip<TOther>(Option<TOther> other)
-    //         where TOther : notnull =>
-    //         (this, other) switch
-    //         {
-    // #if NET11_0_OR_GREATER
-    //             ({ HasValue: true, _value: var s }, { HasValue: true, _value: var o }) => new Some<(T, TOther)>((s!, o!)),
-    //             _ => Option.None.Value,
-    // #else
-    //             (Some<T>(var s), Some<TOther>(var o)) => new Option<(T, TOther)>.Some((s, o)),
-    //             _ => Option<(T, TOther)>.None.Value,
-    // #endif
-    //         };
-    //
-    //     /// <summary>
-    //     ///     Combines the value in <c>this</c> with the value in <paramref name="other" />, using <paramref name="fn" />.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;double&gt; x = Option.Some(17.5);
-    //     ///     Option&lt;double&gt; y = Option.Some(42.7);
-    //     ///     Assert.Equal(Option.Some((17.5, 42.7)), x.ZipWith(y, (a, b) =&gt; (a, b)));
-    //     ///     Assert.Equal(Option.None(), x.ZipWith(Option&lt;double&gt;.None.Value, (a, b) =&gt; (a, b)));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="other">The other option to combine with.</param>
-    //     /// <param name="fn">The function used to combine both values.</param>
-    //     /// <typeparam name="TOther">Type of the other option's value.</typeparam>
-    //     /// <typeparam name="TResult">Type of the combined value.</typeparam>
-    //     /// <returns>
-    //     ///     <see cref="Some{T}" /> containing <c>fn(s, o)</c> if both options are <see cref="Some{T}" />,
-    //     ///     otherwise <see cref="None" />.
-    //     /// </returns>
-    //     public Option<TResult> ZipWith<TOther, TResult>(Option<TOther> other, Func<T, TOther, TResult> fn)
-    //         where TOther : notnull
-    //         where TResult : notnull =>
-    //         (this, other) switch
-    //         {
-    // #if NET11_0_OR_GREATER
-    //             ({ HasValue: true, _value: var s }, { HasValue: true, _value: var o }) => new Some<TResult>(fn(s!, o!)),
-    //             _ => Option.None.Value,
-    // #else
-    //             (Some<T>(var s), Some<TOther>(var o)) => new Option<TResult>.Some(fn(s, o)),
-    //             _ => Option<TResult>.None.Value,
-    // #endif
-    //         };
-    //
-    //     /// <summary>
-    //     ///     Reduces two options into one, using <paramref name="fn" /> if both are <see cref="Some{T}" />.
-    //     ///     If only one of <c>this</c> and <paramref name="other" /> is <see cref="Some{T}" />, that one is returned.
-    //     ///     If both are <see cref="None" />, <see cref="None" /> is returned.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;int&gt; s12 = Option.Some(12);
-    //     ///     Option&lt;int&gt; s17 = Option.Some(17);
-    //     ///     Option&lt;int&gt; n = Option.None();
-    //     ///     Func&lt;int, int, int&gt; f = (a, b) =&gt; a + b;
-    //     ///
-    //     ///     Assert.Equal(Option.Some(29), s12.Reduce(s17, f));
-    //     ///     Assert.Equal(Option.Some(12), s12.Reduce(n, f));
-    //     ///     Assert.Equal(Option.Some(17), n.Reduce(s17, f));
-    //     ///     Assert.Equal(Option.None(), n.Reduce(n, f));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="other">The other option to reduce with.</param>
-    //     /// <param name="fn">The function used to combine both values when both are <see cref="Some{T}" />.</param>
-    //     /// <returns>The reduced option.</returns>
-    //     public Option<T> Reduce(Option<T> other, Func<T, T, T> fn) =>
-    //         (this, other) switch
-    //         {
-    // #if NET11_0_OR_GREATER
-    //             ({ HasValue: true, _value: var s }, { HasValue: true, _value: var o }) => new Some<T>(fn(s!, o!)),
-    //             ({ HasValue: true }, _) => this,
-    //             (_, { HasValue: true }) => other,
-    //             _ => Option.None.Value,
-    // #else
-    //             (Some<T>(var s), Some<T>(var o)) => new Some(fn(s, o)),
-    //             (Some<T>, _) => this,
-    //             (_, Some<T>) => other,
-    //             _ => None.Value,
-    // #endif
-    //         };
 }

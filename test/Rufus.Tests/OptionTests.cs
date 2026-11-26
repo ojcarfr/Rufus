@@ -472,44 +472,45 @@ public class OptionTests
         Assert.IsNone(none.Xor(none));
     }
 
-    // [Fact]
-    // public void GivenAnyOptions_WhenZip_ThenShouldReturnTupleOnlyWhenBothAreSome()
-    // {
-    //     Option<int> x = Any.Some(1);
-    //     Option<string> y = Any.Some("hi");
-    //     Option<byte> z = Any.None();
-    //
-    //     Assert.Equal((1, "hi"), Assert.IsSome(x.Zip(y)).Value);
-    //     Assert.IsNone(x.Zip(z));
-    //     Assert.IsNone(z.Zip(y));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyOptions_WhenZipWith_ThenShouldCombineOnlyWhenBothAreSome()
-    // {
-    //     Option<double> x = Any.Some(17.5);
-    //     Option<double> y = Any.Some(42.7);
-    //     Option<double> none = Any.None();
-    //
-    //     Assert.Equal((17.5, 42.7), Assert.IsSome(x.ZipWith(y, (a, b) => (a, b))).Value);
-    //     Assert.IsNone(x.ZipWith(none, (a, b) => (a, b)));
-    //     Assert.IsNone(none.ZipWith(y, (a, b) => (a, b)));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyOptions_WhenReduce_ThenShouldCombineBothOrReturnSingleSome()
-    // {
-    //     Option<int> s12 = Any.Some(12);
-    //     Option<int> s17 = Any.Some(17);
-    //     Option<int> n = Any.None();
-    //     static int Add(int a, int b) => a + b;
-    //
-    //     Assert.Equal(29, Assert.IsSome(s12.Reduce(s17, Add)).Value);
-    //     Assert.Equal(12, Assert.IsSome(s12.Reduce(n, Add)).Value);
-    //     Assert.Equal(17, Assert.IsSome(n.Reduce(s17, Add)).Value);
-    //     Assert.IsNone(n.Reduce(n, Add));
-    // }
-    //
+    [Fact]
+    public void GivenAnyOptions_WhenZip_ThenShouldReturnTupleOnlyWhenBothAreSome()
+    {
+        Option<int> x = Any.Some(1);
+        Option<string> y = Any.Some("hi");
+        Option<byte> z = Any.None();
+
+        Assert.Equal((1, "hi"), Assert.IsSome(x.Zip(y)).Value);
+        Assert.IsNone(x.Zip(z));
+        Assert.IsNone(z.Zip(y));
+    }
+
+    [Fact]
+    public void GivenAnyOptions_WhenZipWith_ThenShouldCombineOnlyWhenBothAreSome()
+    {
+        Option<double> x = Any.Some(17.5);
+        Option<double> y = Any.Some(42.7);
+        Option<double> none = Any.None();
+
+        Assert.Equal((17.5, 42.7), Assert.IsSome(x.ZipWith(y, (a, b) => (a, b))).Value);
+        Assert.IsNone(x.ZipWith(none, (a, b) => (a, b)));
+        Assert.IsNone(none.ZipWith(y, (a, b) => (a, b)));
+    }
+
+    [Fact]
+    public void GivenAnyOptions_WhenReduce_ThenShouldCombineBothOrReturnSingleSome()
+    {
+        Option<int> s12 = Any.Some(12);
+        Option<int> s17 = Any.Some(17);
+        Option<int> n = Any.None();
+
+        Func<int, int, int> add = (a, b) => a + b;
+
+        Assert.Equal(29, Assert.IsSome(s12.Reduce(s17, add)).Value);
+        Assert.Equal(12, Assert.IsSome(s12.Reduce(n, add)).Value);
+        Assert.Equal(17, Assert.IsSome(n.Reduce(s17, add)).Value);
+        Assert.IsNone(n.Reduce(n, add));
+    }
+
     // [Fact]
     // public void GivenNestedOption_WhenFlatten_ThenShouldUnnestOneLevel()
     // {
@@ -522,21 +523,21 @@ public class OptionTests
     //     Assert.IsNone(none.Flatten());
     // }
     //
-    // [Fact]
-    // public void GivenOptionOfTuple_WhenUnzip_ThenShouldReturnTupleOfOptions()
-    // {
-    //     Option<(int, string)> someTuple = Any.Some((1, "hi"));
-    //     Option<(byte, int)> noneTuple = Any.None();
-    //
-    //     var (a, b) = someTuple.Unzip();
-    //     Assert.Equal(1, Assert.IsSome(a).Value);
-    //     Assert.Equal("hi", Assert.IsSome(b).Value);
-    //
-    //     var (c, d) = noneTuple.Unzip();
-    //     Assert.IsNone(c);
-    //     Assert.IsNone(d);
-    // }
-    //
+    [Fact]
+    public void GivenOptionOfTuple_WhenUnzip_ThenShouldReturnTupleOfOptions()
+    {
+        Option<(int, string)> someTuple = Any.Some((1, "hi"));
+        Option<(byte, int)> noneTuple = Any.None();
+
+        (var a, var b) = someTuple.Unzip();
+        Assert.Equal(1, Assert.IsSome(a).Value);
+        Assert.Equal("hi", Assert.IsSome(b).Value);
+
+        (var c, var d) = noneTuple.Unzip();
+        Assert.IsNone(c);
+        Assert.IsNone(d);
+    }
+
     // [Fact]
     // public void GivenOptionOfResult_WhenTranspose_ThenShouldReturnResultOfOption()
     // {

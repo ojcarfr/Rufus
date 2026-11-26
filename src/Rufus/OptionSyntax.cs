@@ -67,39 +67,39 @@ public static class OptionSyntax
     // #else
     //         option is Option.Some<Option<T>>(var inner) ? inner : Option<T>.None.Value;
     // #endif
-    //
-    //     /// <summary>
-    //     ///     Unzips an option containing a tuple of two values.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;(int, string)&gt; x = Option.Some((1, "hi"));
-    //     ///     Assert.Equal((Option.Some(1), Option.Some("hi")), x.Unzip());
-    //     ///
-    //     ///     Option&lt;(byte, int)&gt; y = Option.None();
-    //     ///     Assert.Equal((Option&lt;byte&gt;.None.Value, Option&lt;int&gt;.None.Value), y.Unzip());
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="option">The option containing a tuple.</param>
-    //     /// <typeparam name="T1">Type of the first tuple element.</typeparam>
-    //     /// <typeparam name="T2">Type of the second tuple element.</typeparam>
-    //     /// <returns>
-    //     ///     <c>(Some(a), Some(b))</c> if <paramref name="option" /> is <c>Some((a, b))</c>,
-    //     ///     otherwise <c>(None, None)</c>.
-    //     /// </returns>
-    //     public static (Option<T1>, Option<T2>) Unzip<T1, T2>(this Option<(T1, T2)> option)
-    //         where T1 : notnull
-    //         where T2 : notnull =>
-    // #if NET11_0_OR_GREATER
-    //         option is Option.Some<(T1, T2)>(var (a, b))
-    //             ? (new Option.Some<T1>(a), new Option.Some<T2>(b))
-    //             : (Option.None.Value, Option.None.Value);
-    // #else
-    //         option is Option.Some<(T1, T2)>(var (a, b))
-    //             ? (new Option<T1>.Some(a), new Option<T2>.Some(b))
-    //             : (Option<T1>.None.Value, Option<T2>.None.Value);
-    // #endif
-    //
+
+    /// <summary>
+    ///     Unzips an option containing a tuple of two values.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;(int, string)&gt; x = Option.Some((1, "hi"));
+    ///     Assert.Equal((Option.Some(1), Option.Some("hi")), x.Unzip());
+    ///
+    ///     Option&lt;(byte, int)&gt; y = Option.None();
+    ///     Assert.Equal((Option&lt;byte&gt;.None.Value, Option&lt;int&gt;.None.Value), y.Unzip());
+    ///     </code>
+    /// </example>
+    /// <param name="option">The option containing a tuple.</param>
+    /// <typeparam name="T1">Type of the first tuple element.</typeparam>
+    /// <typeparam name="T2">Type of the second tuple element.</typeparam>
+    /// <returns>
+    ///     <c>(Some(a), Some(b))</c> if <paramref name="option" /> is <c>Some((a, b))</c>,
+    ///     otherwise <c>(None, None)</c>.
+    /// </returns>
+    public static (Option<T1>, Option<T2>) Unzip<T1, T2>(this Option<(T1, T2)> option)
+        where T1 : notnull
+        where T2 : notnull =>
+#if NET11_0_OR_GREATER
+        option is Option.Some<(T1, T2)>((var a, var b))
+            ? (new Option.Some<T1>(a), new Option.Some<T2>(b))
+            : (Option.None.Value, Option.None.Value);
+#else
+            option is Option.Some<(T1, T2)>(var (a, b))
+                ? (new Option<T1>.Some(a), new Option<T2>.Some(b))
+                : (Option<T1>.None.Value, Option<T2>.None.Value);
+#endif
+
     //     /// <summary>
     //     ///     Transposes an <see cref="Option{T}" /> of a <see cref="Result{T, TError}" /> into a
     //     ///     <see cref="Result{T, TError}" /> of an <see cref="Option{T}" />.
