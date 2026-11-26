@@ -391,20 +391,20 @@ public class OptionTests
     //     Assert.Equal<Result<string, int>>(Any.Error(99), result);
     //     errFactory.Received(1).Invoke();
     // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenIter_ThenShouldYieldSingleValue()
-    // {
-    //     Option<int> sut = Any.Some(4);
-    //     Assert.Equal([4], sut.Iter());
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenIter_ThenShouldYieldEmpty()
-    // {
-    //     Option<int> sut = Any.None();
-    //     Assert.Empty(sut.Iter());
-    // }
+
+    [Fact]
+    public void GivenAnySome_WhenAsEnumerable_ThenShouldYieldSingleValue()
+    {
+        Option<int> sut = Any.Some(4);
+        Assert.Equal([4], sut.AsEnumerable());
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenAsEnumerable_ThenShouldYieldEmpty()
+    {
+        Option<int> sut = Any.None();
+        Assert.Empty(sut.AsEnumerable());
+    }
 
     [Fact]
     public void GivenAnyOption_WhenFilter_ThenShouldFilterByPredicate()
@@ -545,9 +545,9 @@ public class OptionTests
         Option<Result<int, string>> someErr = Any.Some<Result<int, string>>(Any.Error("err"));
         Option<Result<int, string>> none = Any.None();
 
-        Assert.Equal<Result<Option<int>, string>>(Any.Ok<Option<int>>(Any.Some(5)), someOk.Transpose());
-        Assert.Equal<Result<Option<int>, string>>(Any.Error("err"), someErr.Transpose());
-        Assert.Equal<Result<Option<int>, string>>(Any.Ok<Option<int>>(Any.None()), none.Transpose());
+        Assert.Equal(Any.Ok<Option<int>>(Any.Some(5)), someOk.Transpose());
+        Assert.Equal(Any.Error("err"), someErr.Transpose());
+        Assert.Equal(Any.Ok<Option<int>>(Any.None()), none.Transpose());
     }
 
     [Fact]

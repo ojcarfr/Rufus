@@ -765,35 +765,4 @@ public abstract record Option<T>
     // #else
     //         this is Some<T>(var value) ? new Result<T, TError>.Ok(value) : new Result<T, TError>.Error(err());
     // #endif
-    //
-    //     /// <summary>
-    //     ///     Returns an enumerator over the possibly contained value.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;int&gt; x = Option.Some(4);
-    //     ///     Assert.Equal([4], x.Iter());
-    //     ///
-    //     ///     x = Option.None();
-    //     ///     Assert.Empty(x.Iter());
-    //     ///     </code>
-    //     /// </example>
-    //     /// <returns>
-    //     ///     An <see cref="IEnumerable{T}" /> yielding the contained value if <see cref="Some{T}" />,
-    //     ///     or an empty sequence if <see cref="None" />.
-    //     /// </returns>
-    //     public IEnumerable<T> Iter()
-    //     {
-    // #if NET11_0_OR_GREATER
-    //         if (HasValue)
-    //         {
-    //             yield return _value!;
-    //         }
-    // #else
-    //         if (this is Some<T>(var value))
-    //         {
-    //             yield return value;
-    //         }
-    // #endif
-    //     }
 }

@@ -33,6 +33,14 @@ public static class Any
 
     public static class Completed
     {
+        public static Promise<T> Promise<T>(Option<T> option)
+            where T : notnull
+            => new Promise<T>.Completed(option);
+
+        public static Promise<T> Promise<T>(Exception exception)
+            where T : notnull
+            => new Promise<T>.Completed(exception);
+
         public static Promise<T, TError> Promise<T, TError>(Result<T, TError> result)
             where T : notnull
             where TError : notnull
@@ -46,6 +54,14 @@ public static class Any
 
     public static class Pending
     {
+        public static Promise<T> Promise<T>(Option<T> option)
+            where T : notnull
+            => new Promise<T>.Pending(option);
+
+        public static Promise<T> Promise<T>(Exception exception)
+            where T : notnull
+            => new Promise<T>.Pending(exception);
+
         public static Promise<T, TError> Promise<T, TError>(Result<T, TError> result)
             where T : notnull
             where TError : notnull

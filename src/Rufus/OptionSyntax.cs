@@ -136,6 +136,31 @@ public static class OptionSyntax
         };
 
     /// <summary>
+    ///     Returns an enumerator over the possibly contained value.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; x = Option.Some(4);
+    ///     Assert.Equal([4], x.AsEnumerable());
+    ///
+    ///     x = Option.None();
+    ///     Assert.Empty(x.AsEnumerable());
+    ///     </code>
+    /// </example>
+    /// <returns>
+    ///     An <see cref="IEnumerable{T}" /> yielding the contained value if <see cref="Option.Some{T}" />,
+    ///     or an empty sequence if <see cref="Option.None" />.
+    /// </returns>
+    public static IEnumerable<T> AsEnumerable<T>(this Option<T> source)
+        where T : notnull
+    {
+        if (source is Option.Some<T>(var value))
+        {
+            yield return value;
+        }
+    }
+
+    /// <summary>
     ///     Transforms an optional sequence into an <see cref="IEnumerable{T}" />.
     ///     If <paramref name="option" /> is <see cref="Option.None" />, the resulting sequence is empty;
     ///     otherwise, the elements of the contained sequence are yielded.
@@ -198,4 +223,481 @@ public static class OptionSyntax
             yield return item;
         }
     }
+
+    /// <summary>
+    ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
+    ///     taking the contained value in order to return another option.
+    /// </summary>
+    /// <param name="option">The option to bind.</param>
+    /// <param name="next">The function to be bound on <see cref="Option.Some{T}" />.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <typeparam name="TMap">The returned value type returned by given function.</typeparam>
+    /// <returns>
+    ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static Task<Option<TMap>> AndThen<T, TMap>(this Option<T> option, Func<T, Task<Option<TMap>>> next)
+        where T : notnull
+        where TMap : notnull =>
+        option switch
+        {
+            Option.Some<T>(var value) => next(value),
+            _ => Task.FromResult(None<TMap>()),
+        };
+
+    /// <summary>
+    ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
+    ///     taking the contained value in order to return another option.
+    /// </summary>
+    /// <param name="option">The option to bind.</param>
+    /// <param name="next">The function to be bound on <see cref="Option.Some{T}" />.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <typeparam name="TMap">The returned value type returned by given function.</typeparam>
+    /// <returns>
+    ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
+        this Option<T> option, Func<T, ValueTask<Option<TMap>>> next)
+        where T : notnull
+        where TMap : notnull =>
+        option switch
+        {
+            Option.Some<T>(var value) => next(value),
+            _ => ValueTask.FromResult(None<TMap>()),
+        };
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the option is <see cref="Option.None" />.
+    /// </summary>
+    /// <param name="option">The option to bind.</param>
+    /// <param name="op">The bound function that returns a fallback option.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <returns>
+    ///     The option returned by <paramref name="op" /> function when <see cref="Option.None" />, otherwise returns
+    ///     the <see cref="Option.Some{T}" /> option.
+    /// </returns>
+    public static Task<Option<T>> OrElse<T>(this Option<T> option, Func<Task<Option<T>>> op)
+        where T : notnull =>
+        option switch
+        {
+            Option.Some<T> => Task.FromResult(option),
+            _ => op(),
+        };
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the option is <see cref="Option.None" />.
+    /// </summary>
+    /// <param name="option">The option to bind.</param>
+    /// <param name="op">The bound function that returns a fallback option.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <returns>
+    ///     The option returned by <paramref name="op" /> function when <see cref="Option.None" />, otherwise returns
+    ///     the <see cref="Option.Some{T}" /> option.
+    /// </returns>
+    public static ValueTask<Option<T>> OrElse<T>(this Option<T> option, Func<ValueTask<Option<T>>> op)
+        where T : notnull =>
+        option switch
+        {
+            Option.Some<T> => ValueTask.FromResult(option),
+            _ => op(),
+        };
+
+    /// <summary>
+    ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
+    ///     taking the contained value in order to return another option.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="next">The function to be bound on <see cref="Option.Some{T}" />.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <typeparam name="TMap">The returned value type returned by given function.</typeparam>
+    /// <returns>
+    ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static Task<Option<TMap>> AndThen<T, TMap>(this Task<Option<T>> promise, Func<T, Task<Option<TMap>>> next)
+        where T : notnull
+        where TMap : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: Option.Some<T>(var value) } => next(value),
+            { IsCompletedSuccessfully: true } => Task.FromResult(None<TMap>()),
+            _ => BindAsync(promise: promise, next: next),
+        };
+
+        static async Task<Option<TMap>> BindAsync(Task<Option<T>> promise, Func<T, Task<Option<TMap>>> next) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
+                _ => None<TMap>(),
+            };
+    }
+
+    /// <summary>
+    ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
+    ///     taking the contained value in order to return another option.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="next">The function to be bound on <see cref="Option.Some{T}" />.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <typeparam name="TMap">The returned value type returned by given function.</typeparam>
+    /// <returns>
+    ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
+        this Task<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next)
+        where T : notnull
+        where TMap : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: Option.Some<T>(var value) } => next(value),
+            { IsCompletedSuccessfully: true } => ValueTask.FromResult(None<TMap>()),
+            _ => BindAsync(promise: promise, next: next),
+        };
+
+        static async ValueTask<Option<TMap>> BindAsync(
+            Task<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
+                _ => None<TMap>(),
+            };
+    }
+
+    /// <summary>
+    ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
+    ///     taking the contained value in order to return another option.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="next">The function to be bound on <see cref="Option.Some{T}" />.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <typeparam name="TMap">The returned value type returned by given function.</typeparam>
+    /// <returns>
+    ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static Task<Option<TMap>> AndThen<T, TMap>(this Task<Option<T>> promise, Func<T, Option<TMap>> next)
+        where T : notnull
+        where TMap : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: Option.Some<T>(var value) } => value.Bind(next),
+            { IsCompletedSuccessfully: true } => Task.FromResult(None<TMap>()),
+            _ => BindAsync(promise: promise, next: next),
+        };
+
+        static async Task<Option<TMap>> BindAsync(Task<Option<T>> promise, Func<T, Option<TMap>> next) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                Option.Some<T>(var value) => next(value),
+                _ => None<TMap>(),
+            };
+    }
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the option is <see cref="Option.None" />.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="op">The bound function that returns a fallback option.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <returns>
+    ///     The option returned by <paramref name="op" /> function when <see cref="Option.None" />, otherwise returns
+    ///     the <see cref="Option.Some{T}" /> option.
+    /// </returns>
+    public static Task<Option<T>> OrElse<T>(this Task<Option<T>> promise, Func<Task<Option<T>>> op)
+        where T : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: { IsSome: true } result } => Task.FromResult(result),
+            { IsCompletedSuccessfully: true } => op(),
+            _ => BindAsync(promise: promise, op: op),
+        };
+
+        static async Task<Option<T>> BindAsync(Task<Option<T>> promise, Func<Task<Option<T>>> op) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                { IsSome: true } result => result,
+                _ => await op().ConfigureAwait(false),
+            };
+    }
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the option is <see cref="Option.None" />.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="op">The bound function that returns a fallback option.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <returns>
+    ///     The option returned by <paramref name="op" /> function when <see cref="Option.None" />, otherwise returns
+    ///     the <see cref="Option.Some{T}" /> option.
+    /// </returns>
+    public static ValueTask<Option<T>> OrElse<T>(this Task<Option<T>> promise, Func<ValueTask<Option<T>>> op)
+        where T : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: { IsSome: true } result } => ValueTask.FromResult(result),
+            { IsCompletedSuccessfully: true } => op(),
+            _ => BindAsync(promise: promise, op: op),
+        };
+
+        static async ValueTask<Option<T>> BindAsync(Task<Option<T>> promise, Func<ValueTask<Option<T>>> op) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                { IsSome: true } result => result,
+                _ => await op().ConfigureAwait(false),
+            };
+    }
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the option is <see cref="Option.None" />.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="op">The bound function that returns a fallback option.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <returns>
+    ///     The option returned by <paramref name="op" /> function when <see cref="Option.None" />, otherwise returns
+    ///     the <see cref="Option.Some{T}" /> option.
+    /// </returns>
+    public static Task<Option<T>> OrElse<T>(this Task<Option<T>> promise, Func<Option<T>> op)
+        where T : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: { IsSome: true } result } => Task.FromResult(result),
+            { IsCompletedSuccessfully: true } => Bind(op),
+            _ => BindAsync(promise: promise, op: op),
+        };
+
+        static async Task<Option<T>> BindAsync(Task<Option<T>> promise, Func<Option<T>> op) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                { IsSome: true } result => result,
+                _ => op(),
+            };
+    }
+
+    /// <summary>
+    ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
+    ///     taking the contained value in order to return another option.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="next">The function to be bound on <see cref="Option.Some{T}" />.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <typeparam name="TMap">The returned value type returned by given function.</typeparam>
+    /// <returns>
+    ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
+        this ValueTask<Option<T>> promise, Func<T, Task<Option<TMap>>> next)
+        where T : notnull
+        where TMap : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: Option.Some<T>(var value) } =>
+                new ValueTask<Option<TMap>>(next(value)),
+            { IsCompletedSuccessfully: true } => ValueTask.FromResult(None<TMap>()),
+            _ => BindAsync(promise: promise, next: next),
+        };
+
+        static async ValueTask<Option<TMap>> BindAsync(
+            ValueTask<Option<T>> promise, Func<T, Task<Option<TMap>>> next) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
+                _ => None<TMap>(),
+            };
+    }
+
+    /// <summary>
+    ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
+    ///     taking the contained value in order to return another option.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="next">The function to be bound on <see cref="Option.Some{T}" />.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <typeparam name="TMap">The returned value type returned by given function.</typeparam>
+    /// <returns>
+    ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
+        this ValueTask<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next)
+        where T : notnull
+        where TMap : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: Option.Some<T>(var value) } => next(value),
+            { IsCompletedSuccessfully: true } => ValueTask.FromResult(None<TMap>()),
+            _ => BindAsync(promise: promise, next: next),
+        };
+
+        static async ValueTask<Option<TMap>> BindAsync(
+            ValueTask<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
+                _ => None<TMap>(),
+            };
+    }
+
+    /// <summary>
+    ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
+    ///     taking the contained value in order to return another option.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="next">The function to be bound on <see cref="Option.Some{T}" />.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <typeparam name="TMap">The returned value type returned by given function.</typeparam>
+    /// <returns>
+    ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
+        this ValueTask<Option<T>> promise, Func<T, Option<TMap>> next)
+        where T : notnull
+        where TMap : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: Option.Some<T>(var value) } =>
+                new ValueTask<Option<TMap>>(value.Bind(next)),
+            { IsCompletedSuccessfully: true } => ValueTask.FromResult(None<TMap>()),
+            _ => BindAsync(promise: promise, next: next),
+        };
+
+        static async ValueTask<Option<TMap>> BindAsync(
+            ValueTask<Option<T>> promise, Func<T, Option<TMap>> next) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                Option.Some<T>(var value) => next(value),
+                _ => None<TMap>(),
+            };
+    }
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the option is <see cref="Option.None" />.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="op">The bound function that returns a fallback option.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <returns>
+    ///     The option returned by <paramref name="op" /> function when <see cref="Option.None" />, otherwise returns
+    ///     the <see cref="Option.Some{T}" /> option.
+    /// </returns>
+    public static ValueTask<Option<T>> OrElse<T>(this ValueTask<Option<T>> promise, Func<Task<Option<T>>> op)
+        where T : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: { IsSome: true } result } => ValueTask.FromResult(result),
+            { IsCompletedSuccessfully: true } => new ValueTask<Option<T>>(op()),
+            _ => BindAsync(promise: promise, op: op),
+        };
+
+        static async ValueTask<Option<T>> BindAsync(ValueTask<Option<T>> promise, Func<Task<Option<T>>> op) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                { IsSome: true } result => result,
+                _ => await op().ConfigureAwait(false),
+            };
+    }
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the option is <see cref="Option.None" />.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="op">The bound function that returns a fallback option.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <returns>
+    ///     The option returned by <paramref name="op" /> function when <see cref="Option.None" />, otherwise returns
+    ///     the <see cref="Option.Some{T}" /> option.
+    /// </returns>
+    public static ValueTask<Option<T>> OrElse<T>(this ValueTask<Option<T>> promise, Func<ValueTask<Option<T>>> op)
+        where T : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: { IsSome: true } result } => ValueTask.FromResult(result),
+            { IsCompletedSuccessfully: true } => op(),
+            _ => BindAsync(promise: promise, op: op),
+        };
+
+        static async ValueTask<Option<T>> BindAsync(ValueTask<Option<T>> promise, Func<ValueTask<Option<T>>> op) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                { IsSome: true } result => result,
+                _ => await op().ConfigureAwait(false),
+            };
+    }
+
+    /// <summary>
+    ///     Binds <paramref name="op" /> function to be executed if the option is <see cref="Option.None" />.
+    /// </summary>
+    /// <param name="promise">The promise to bind.</param>
+    /// <param name="op">The bound function that returns a fallback option.</param>
+    /// <typeparam name="T">The contained value type.</typeparam>
+    /// <returns>
+    ///     The option returned by <paramref name="op" /> function when <see cref="Option.None" />, otherwise returns
+    ///     the <see cref="Option.Some{T}" /> option.
+    /// </returns>
+    public static ValueTask<Option<T>> OrElse<T>(this ValueTask<Option<T>> promise, Func<Option<T>> op)
+        where T : notnull
+    {
+        return promise switch
+        {
+            { IsCompletedSuccessfully: true, Result: { IsSome: true } result } => ValueTask.FromResult(result),
+            { IsCompletedSuccessfully: true } => new ValueTask<Option<T>>(Bind(op)),
+            _ => BindAsync(promise: promise, op: op),
+        };
+
+        static async ValueTask<Option<T>> BindAsync(ValueTask<Option<T>> promise, Func<Option<T>> op) =>
+            await promise.ConfigureAwait(false) switch
+            {
+                { IsSome: true } result => result,
+                _ => op(),
+            };
+    }
+
+    private static Task<Option<TMap>> Bind<T, TMap>(this T value, Func<T, Option<TMap>> fn)
+        where TMap : notnull
+    {
+        try
+        {
+            return Task.FromResult(fn(value));
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException<Option<TMap>>(exception);
+        }
+    }
+
+    private static Task<Option<T>> Bind<T>(Func<Option<T>> fn)
+        where T : notnull
+    {
+        try
+        {
+            return Task.FromResult(fn());
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException<Option<T>>(exception);
+        }
+    }
+
+    private static Option<T> None<T>()
+        where T : notnull =>
+#if NET11_0_OR_GREATER
+        Option.None.Value;
+#else
+        Option<T>.None.Value;
+#endif
 }
