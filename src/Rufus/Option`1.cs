@@ -156,7 +156,7 @@ public abstract record Option<T>
 #if NET11_0_OR_GREATER
         HasValue ? option : None.Value;
 #else
-            this is Some ? option : Option<TMap>.None.Value;
+        this is Some ? option : Option<TMap>.None.Value;
 #endif
 
     /// <summary>
@@ -182,7 +182,7 @@ public abstract record Option<T>
 #if NET11_0_OR_GREATER
         HasValue ? fn(_value!) : None.Value;
 #else
-            this is Some<T>(var value) ? fn(value) : Option<TMap>.None.Value;
+        this is Some<T>(var value) ? fn(value) : Option<TMap>.None.Value;
 #endif
 
     /// <summary>
@@ -211,6 +211,32 @@ public abstract record Option<T>
             Some<T>(var value) => value,
             _ => throw new InvalidOperationException(msg),
         };
+
+    /// <summary>
+    ///     Returns <see cref="None" /> if the option is <see cref="None" />, otherwise calls
+    ///     <paramref name="predicate" /> with the wrapped value and returns <see cref="Some{T}" /> if
+    ///     <paramref name="predicate" /> returns <c>true</c>, or <see cref="None" /> if it returns <c>false</c>.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     static bool IsEven(int n) =&gt; n % 2 == 0;
+    ///
+    ///     Assert.Equal(Option.None(), Option&lt;int&gt;.None.Value.Filter(IsEven));
+    ///     Assert.Equal(Option.None(), Option.Some(3).Filter(IsEven));
+    ///     Assert.Equal(Option.Some(4), Option.Some(4).Filter(IsEven));
+    ///     </code>
+    /// </example>
+    /// <param name="predicate">The predicate used to test the contained value.</param>
+    /// <returns>
+    ///     The current option if <see cref="Some{T}" /> and <paramref name="predicate" /> returns <c>true</c>,
+    ///     otherwise <see cref="None" />.
+    /// </returns>
+    public Option<T> Filter(Func<T, bool> predicate) =>
+#if NET11_0_OR_GREATER
+        HasValue && predicate(_value!) ? this : None.Value;
+#else
+        this is Some<T>(var value) && predicate(value) ? this : None.Value;
+#endif
 
     /// <summary>
     ///     Calls the specified action with the contained value if <see cref="Some{T}" />.
@@ -342,7 +368,7 @@ public abstract record Option<T>
 #if NET11_0_OR_GREATER
         HasValue ? map(_value!) : @default;
 #else
-            this is Some(var value) ? map(value) : @default;
+        this is Some(var value) ? map(value) : @default;
 #endif
 
     /// <summary>
@@ -369,7 +395,7 @@ public abstract record Option<T>
 #if NET11_0_OR_GREATER
         HasValue ? map(_value!) : fallback();
 #else
-            this is Some(var value) ? map(value) : fallback();
+        this is Some(var value) ? map(value) : fallback();
 #endif
 
     /// <summary>
@@ -391,11 +417,7 @@ public abstract record Option<T>
     ///     The mapped value if <see cref="Some{T}" />, otherwise <c>default(TMap)</c>.
     /// </returns>
     public TMap? MapOrDefault<TMap>(Func<T, TMap> map) =>
-#if NET11_0_OR_GREATER
-        HasValue ? map(_value!) : default;
-#else
-            this is Some(var value) ? map(value) : default;
-#endif
+        MapOr(map, default);
 
     /// <summary>
     ///     Returns the contained <see cref="Some{T}" /> value.
@@ -587,32 +609,6 @@ public abstract record Option<T>
     //         }
     // #endif
     //     }
-    //
-    //     /// <summary>
-    //     ///     Returns <see cref="None" /> if the option is <see cref="None" />, otherwise calls
-    //     ///     <paramref name="predicate" /> with the wrapped value and returns <see cref="Some{T}" /> if
-    //     ///     <paramref name="predicate" /> returns <c>true</c>, or <see cref="None" /> if it returns <c>false</c>.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     static bool IsEven(int n) =&gt; n % 2 == 0;
-    //     ///
-    //     ///     Assert.Equal(Option.None(), Option&lt;int&gt;.None.Value.Filter(IsEven));
-    //     ///     Assert.Equal(Option.None(), Option.Some(3).Filter(IsEven));
-    //     ///     Assert.Equal(Option.Some(4), Option.Some(4).Filter(IsEven));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="predicate">The predicate used to test the contained value.</param>
-    //     /// <returns>
-    //     ///     The current option if <see cref="Some{T}" /> and <paramref name="predicate" /> returns <c>true</c>,
-    //     ///     otherwise <see cref="None" />.
-    //     /// </returns>
-    //     public Option<T> Filter(Func<T, bool> predicate) =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue && predicate(_value!) ? this : Option.None.Value;
-    // #else
-    //         this is Some<T>(var value) && predicate(value) ? this : None.Value;
-    // #endif
     //
     //     /// <summary>
     //     ///     Returns the option if it contains a value, otherwise returns <paramref name="option" />.

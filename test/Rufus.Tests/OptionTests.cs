@@ -405,21 +405,21 @@ public class OptionTests
     //     Option<int> sut = Any.None();
     //     Assert.Empty(sut.Iter());
     // }
-    //
-    // [Fact]
-    // public void GivenAnyOption_WhenFilter_ThenShouldFilterByPredicate()
-    // {
-    //     static bool IsEven(int n) => n % 2 == 0;
-    //
-    //     Option<int> none = Any.None();
-    //     Option<int> odd = Any.Some(3);
-    //     Option<int> even = Any.Some(4);
-    //
-    //     Assert.IsNone(none.Filter(IsEven));
-    //     Assert.IsNone(odd.Filter(IsEven));
-    //     Assert.Equal(4, Assert.IsSome(even.Filter(IsEven)).Value);
-    // }
-    //
+
+    [Fact]
+    public void GivenAnyOption_WhenFilter_ThenShouldFilterByPredicate()
+    {
+        Func<int, bool> isEven = n => n % 2 == 0;
+
+        Option<int> none = Any.None();
+        Option<int> odd = Any.Some(3);
+        Option<int> even = Any.Some(4);
+
+        Assert.IsNone(none.Filter(isEven));
+        Assert.IsNone(odd.Filter(isEven));
+        Assert.Equal(4, Assert.IsSome(even.Filter(isEven)).Value);
+    }
+
     // [Fact]
     // public void GivenAnyOption_WhenOr_ThenShouldReturnFirstSomeOrSecond()
     // {
