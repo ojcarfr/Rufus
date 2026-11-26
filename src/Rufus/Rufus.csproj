@@ -12,8 +12,8 @@
         <Description>Railway Oriented Programming primitives implementation for C# inspired in Rust types.</Description>
         <PackageTags>functional discriminated union tags ROP railway result option</PackageTags>
         <RootNamespace>System</RootNamespace>
-        <Version></Version>
         <Title>Rufus</Title>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +22,7 @@
 
     <ItemGroup>
         <None Include="shinkansen.png" Pack="True" PackagePath="\"/>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>
