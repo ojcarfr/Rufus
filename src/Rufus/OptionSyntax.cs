@@ -136,95 +136,6 @@ public static class OptionSyntax
         };
 
     /// <summary>
-    ///     Returns an enumerator over the possibly contained value.
-    /// </summary>
-    /// <example>
-    ///     <code>
-    ///     Option&lt;int&gt; x = Option.Some(4);
-    ///     Assert.Equal([4], x.AsEnumerable());
-    ///
-    ///     x = Option.None();
-    ///     Assert.Empty(x.AsEnumerable());
-    ///     </code>
-    /// </example>
-    /// <returns>
-    ///     An <see cref="IEnumerable{T}" /> yielding the contained value if <see cref="Option.Some{T}" />,
-    ///     or an empty sequence if <see cref="Option.None" />.
-    /// </returns>
-    public static IEnumerable<T> AsEnumerable<T>(this Option<T> source)
-        where T : notnull
-    {
-        if (source is Option.Some<T>(var value))
-        {
-            yield return value;
-        }
-    }
-
-    /// <summary>
-    ///     Transforms an optional sequence into an <see cref="IEnumerable{T}" />.
-    ///     If <paramref name="option" /> is <see cref="Option.None" />, the resulting sequence is empty;
-    ///     otherwise, the elements of the contained sequence are yielded.
-    /// </summary>
-    /// <example>
-    ///     <code>
-    ///     Option&lt;IEnumerable&lt;int&gt;&gt; o1 = Option.Some&lt;IEnumerable&lt;int&gt;&gt;([1, 2]);
-    ///     Option&lt;IEnumerable&lt;int&gt;&gt; o2 = Option.None();
-    ///     Assert.Equal([1, 2], o1.AsFlattenEnumerable());
-    ///     Assert.Empty(o2.AsFlattenEnumerable());
-    ///     </code>
-    /// </example>
-    /// <param name="option">The optional sequence to flatten.</param>
-    /// <typeparam name="T">Type of the sequence elements.</typeparam>
-    /// <returns>
-    ///     An <see cref="IEnumerable{T}" /> containing the elements of the inner sequence, or empty if
-    ///     <see cref="Option.None" />.
-    /// </returns>
-    public static IEnumerable<T> AsFlattenEnumerable<T>(this Option<IEnumerable<T>> option)
-    {
-        if (option is not Option.Some<IEnumerable<T>>(var inner))
-        {
-            yield break;
-        }
-
-        foreach (T item in inner)
-        {
-            yield return item;
-        }
-    }
-
-    /// <summary>
-    ///     Transforms an optional sequence into an <see cref="IAsyncEnumerable{T}" />.
-    ///     If <paramref name="option" /> is <see cref="Option.None" />, the resulting sequence is empty;
-    ///     otherwise, the elements of the contained sequence are yielded.
-    /// </summary>
-    /// <example>
-    ///     <code>
-    ///     Option&lt;IEnumerable&lt;int&gt;&gt; o1 = Option.Some&lt;IEnumerable&lt;int&gt;&gt;([1, 2]);
-    ///     Option&lt;IEnumerable&lt;int&gt;&gt; o2 = Option.None();
-    ///     Assert.Equal([1, 2], o1.AsFlattenAsyncEnumerable());
-    ///     Assert.Empty(o2.AsFlattenAsyncEnumerable());
-    ///     </code>
-    /// </example>
-    /// <param name="option">The optional sequence to flatten.</param>
-    /// <typeparam name="T">Type of the sequence elements.</typeparam>
-    /// <returns>
-    ///     An <see cref="IEnumerable{T}" /> containing the elements of the inner sequence, or empty if
-    ///     <see cref="Option.None" />.
-    /// </returns>
-    public static async IAsyncEnumerable<T> AsFlattenAsyncEnumerable<T>(this Option<IAsyncEnumerable<T>> option)
-    {
-        if (option is not Option.Some<IAsyncEnumerable<T>>(var inner))
-        {
-            yield break;
-        }
-
-        await foreach (T item in inner)
-        {
-            yield return item;
-        }
-    }
-
-    /// <summary>
     ///     Binds the given <paramref name="next" /> function to be executed if the option is <see cref="Option.Some{T}" />,
     ///     taking the contained value in order to return another option.
     /// </summary>
@@ -257,8 +168,7 @@ public static class OptionSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
     ///     <see cref="Option.None" />.
     /// </returns>
-    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
-        this Option<T> option, Func<T, ValueTask<Option<TMap>>> next)
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(this Option<T> option, Func<T, ValueTask<Option<TMap>>> next)
         where T : notnull
         where TMap : notnull =>
         option switch
@@ -346,8 +256,8 @@ public static class OptionSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
     ///     <see cref="Option.None" />.
     /// </returns>
-    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
-        this Task<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next)
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(this Task<Option<T>> promise,
+                                                           Func<T, ValueTask<Option<TMap>>> next)
         where T : notnull
         where TMap : notnull
     {
@@ -358,13 +268,13 @@ public static class OptionSyntax
             _ => BindAsync(promise: promise, next: next),
         };
 
-        static async ValueTask<Option<TMap>> BindAsync(
-            Task<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next) =>
-            await promise.ConfigureAwait(false) switch
-            {
-                Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
-                _ => None<TMap>(),
-            };
+        static async ValueTask<Option<TMap>> BindAsync(Task<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next)
+            =>
+                await promise.ConfigureAwait(false) switch
+                {
+                    Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
+                    _ => None<TMap>(),
+                };
     }
 
     /// <summary>
@@ -494,8 +404,8 @@ public static class OptionSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
     ///     <see cref="Option.None" />.
     /// </returns>
-    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
-        this ValueTask<Option<T>> promise, Func<T, Task<Option<TMap>>> next)
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(this ValueTask<Option<T>> promise,
+                                                           Func<T, Task<Option<TMap>>> next)
         where T : notnull
         where TMap : notnull
     {
@@ -507,13 +417,13 @@ public static class OptionSyntax
             _ => BindAsync(promise: promise, next: next),
         };
 
-        static async ValueTask<Option<TMap>> BindAsync(
-            ValueTask<Option<T>> promise, Func<T, Task<Option<TMap>>> next) =>
-            await promise.ConfigureAwait(false) switch
-            {
-                Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
-                _ => None<TMap>(),
-            };
+        static async ValueTask<Option<TMap>> BindAsync(ValueTask<Option<T>> promise, Func<T, Task<Option<TMap>>> next)
+            =>
+                await promise.ConfigureAwait(false) switch
+                {
+                    Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
+                    _ => None<TMap>(),
+                };
     }
 
     /// <summary>
@@ -528,8 +438,8 @@ public static class OptionSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
     ///     <see cref="Option.None" />.
     /// </returns>
-    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
-        this ValueTask<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next)
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(this ValueTask<Option<T>> promise,
+                                                           Func<T, ValueTask<Option<TMap>>> next)
         where T : notnull
         where TMap : notnull
     {
@@ -540,8 +450,8 @@ public static class OptionSyntax
             _ => BindAsync(promise: promise, next: next),
         };
 
-        static async ValueTask<Option<TMap>> BindAsync(
-            ValueTask<Option<T>> promise, Func<T, ValueTask<Option<TMap>>> next) =>
+        static async ValueTask<Option<TMap>> BindAsync(ValueTask<Option<T>> promise,
+                                                       Func<T, ValueTask<Option<TMap>>> next) =>
             await promise.ConfigureAwait(false) switch
             {
                 Option.Some<T>(var value) => await next(value).ConfigureAwait(false),
@@ -561,8 +471,8 @@ public static class OptionSyntax
     ///     A promise that executes <paramref name="next" /> when <see cref="Option.Some{T}" />, otherwise returns
     ///     <see cref="Option.None" />.
     /// </returns>
-    public static ValueTask<Option<TMap>> AndThen<T, TMap>(
-        this ValueTask<Option<T>> promise, Func<T, Option<TMap>> next)
+    public static ValueTask<Option<TMap>> AndThen<T, TMap>(this ValueTask<Option<T>> promise,
+                                                           Func<T, Option<TMap>> next)
         where T : notnull
         where TMap : notnull
     {
@@ -574,8 +484,7 @@ public static class OptionSyntax
             _ => BindAsync(promise: promise, next: next),
         };
 
-        static async ValueTask<Option<TMap>> BindAsync(
-            ValueTask<Option<T>> promise, Func<T, Option<TMap>> next) =>
+        static async ValueTask<Option<TMap>> BindAsync(ValueTask<Option<T>> promise, Func<T, Option<TMap>> next) =>
             await promise.ConfigureAwait(false) switch
             {
                 Option.Some<T>(var value) => next(value),

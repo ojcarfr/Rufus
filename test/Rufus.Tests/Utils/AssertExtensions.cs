@@ -6,6 +6,30 @@ public static class AssertExtensions
 {
     extension(Assert)
     {
+        public static Result.Ok<T> IsOk<T, TError>(Result<T, TError> result)
+            where T : notnull
+            where TError : notnull
+        {
+            if (result is Result.Ok<T> ok)
+            {
+                return ok;
+            }
+
+            throw result.MismatchedType(typeof(Result.Ok<T>));
+        }
+
+        public static Result.Error<TError> IsError<T, TError>(Result<T, TError> result)
+            where T : notnull
+            where TError : notnull
+        {
+            if (result is Result.Error<TError> error)
+            {
+                return error;
+            }
+
+            throw result.MismatchedType(typeof(Result.Error<TError>));
+        }
+
         public static Option.Some<T> IsSome<T>(Option<T> option)
             where T : notnull
         {

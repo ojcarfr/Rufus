@@ -349,61 +349,47 @@ public class OptionTests
         fn.DidNotReceive().Invoke(Arg.Any<int>());
     }
 
-    // [Fact]
-    // public void GivenAnySome_WhenOkOr_ThenShouldReturnOk()
-    // {
-    //     Option<string> sut = Any.Some("foo");
-    //     Result<string, int> expected = Any.Ok("foo");
-    //
-    //     Assert.Equal(expected, sut.OkOr(0));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenOkOr_ThenShouldReturnError()
-    // {
-    //     Option<string> sut = Any.None();
-    //     Result<string, int> expected = Any.Error(0);
-    //
-    //     Assert.Equal(expected, sut.OkOr(0));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenOkOrElse_ThenShouldReturnOkWithoutInvokingErrorFactory()
-    // {
-    //     Option<string> sut = Any.Some("foo");
-    //     var errFactory = Substitute.For<Func<int>>();
-    //
-    //     var result = sut.OkOrElse(errFactory);
-    //
-    //     Assert.Equal<Result<string, int>>(Any.Ok("foo"), result);
-    //     errFactory.DidNotReceive().Invoke();
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenOkOrElse_ThenShouldInvokeErrorFactoryAndReturnError()
-    // {
-    //     Option<string> sut = Any.None();
-    //     var errFactory = Substitute.For<Func<int>>();
-    //     errFactory.Invoke().Returns(99);
-    //
-    //     var result = sut.OkOrElse(errFactory);
-    //
-    //     Assert.Equal<Result<string, int>>(Any.Error(99), result);
-    //     errFactory.Received(1).Invoke();
-    // }
-
     [Fact]
-    public void GivenAnySome_WhenAsEnumerable_ThenShouldYieldSingleValue()
+    public void GivenAnySome_WhenOkOr_ThenShouldReturnOk()
     {
-        Option<int> sut = Any.Some(4);
-        Assert.Equal([4], sut.AsEnumerable());
+        Option<string> sut = Any.Some("foo");
+        Result<string, int> expected = Any.Ok("foo");
+
+        Assert.Equal(expected, sut.OkOr(0));
     }
 
     [Fact]
-    public void GivenAnyNone_WhenAsEnumerable_ThenShouldYieldEmpty()
+    public void GivenAnyNone_WhenOkOr_ThenShouldReturnError()
     {
-        Option<int> sut = Any.None();
-        Assert.Empty(sut.AsEnumerable());
+        Option<string> sut = Any.None();
+        Result<string, int> expected = Any.Error(0);
+
+        Assert.Equal(expected, sut.OkOr(0));
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenOkOrElse_ThenShouldReturnOkWithoutInvokingErrorFactory()
+    {
+        Option<string> sut = Any.Some("foo");
+        var errFactory = Substitute.For<Func<int>>();
+
+        var result = sut.OkOrElse(errFactory);
+
+        Assert.Equal(Any.Ok("foo"), result);
+        errFactory.DidNotReceive().Invoke();
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenOkOrElse_ThenShouldInvokeErrorFactoryAndReturnError()
+    {
+        Option<string> sut = Any.None();
+        var errFactory = Substitute.For<Func<int>>();
+        errFactory.Invoke().Returns(99);
+
+        var result = sut.OkOrElse(errFactory);
+
+        Assert.Equal(Any.Error(99), result);
+        errFactory.Received(1).Invoke();
     }
 
     [Fact]
@@ -548,26 +534,5 @@ public class OptionTests
         Assert.Equal(Any.Ok<Option<int>>(Any.Some(5)), someOk.Transpose());
         Assert.Equal(Any.Error("err"), someErr.Transpose());
         Assert.Equal(Any.Ok<Option<int>>(Any.None()), none.Transpose());
-    }
-
-    [Fact]
-    public void GivenOptionOfEnumerable_WhenAsFlattenEnumerable_ThenShouldYieldElementsOrEmpty()
-    {
-        Option<IEnumerable<int>> someSeq = Any.Some<IEnumerable<int>>([1, 2]);
-        Option<IEnumerable<int>> noneSeq = Any.None();
-
-        Assert.Equal([1, 2], someSeq.AsFlattenEnumerable());
-        Assert.Empty(noneSeq.AsFlattenEnumerable());
-    }
-
-    [Fact]
-    public void GivenOptionOfAsyncEnumerable_WhenAsFlattenAsyncEnumerable_ThenShouldYieldElementsOrEmpty()
-    {
-        Option<IAsyncEnumerable<int>> someSeq = Any.Some(AsyncEnumerable.Range(1, 2));
-        Option<IAsyncEnumerable<int>> noneSeq = Any.None();
-
-        Assert.Equal([1, 2], someSeq.AsFlattenAsyncEnumerable());
-
-        Assert.Empty(noneSeq.AsFlattenAsyncEnumerable());
     }
 }

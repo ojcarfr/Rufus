@@ -420,6 +420,66 @@ public abstract record Option<T>
         MapOr(map, default);
 
     /// <summary>
+    ///     Transforms the <see cref="Option{T}" /> into a <see cref="Result{T, TError}" />, mapping
+    ///     <see cref="Some{T}" /> to <see cref="Result.Ok{T}" /> and <see cref="None" /> to
+    ///     <see cref="Result.Error{TError}" /> with <paramref name="error" />.
+    /// </summary>
+    /// <remarks>
+    ///     Arguments passed to <see cref="OkOr{TError}" /> are eagerly evaluated; if you are passing the result
+    ///     of a function call, it is recommended to use <see cref="OkOrElse{TError}" />, which is lazily evaluated.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;string&gt; x = Option.Some("foo");
+    ///     Assert.Equal(Result.Ok("foo"), x.OkOr(0));
+    ///
+    ///     x = Option.None();
+    ///     Assert.Equal(Result.Error(0), x.OkOr(0));
+    ///     </code>
+    /// </example>
+    /// <param name="error">The error value returned in case of <see cref="None" />.</param>
+    /// <typeparam name="TError">Type of the error value.</typeparam>
+    /// <returns>
+    ///     <see cref="Result{T, TError}" /> containing the value if <see cref="Some{T}" />,
+    ///     otherwise <paramref name="error" />.
+    /// </returns>
+    public Result<T, TError> OkOr<TError>(TError error)
+        where TError : notnull =>
+#if NET11_0_OR_GREATER
+        HasValue ? new Result.Ok<T>(_value!) : new Result.Error<TError>(error);
+#else
+        this is Some<T>(var value) ? new Result<T, TError>.Ok(value) : new Result<T, TError>.Error(error);
+#endif
+
+    /// <summary>
+    ///     Transforms the <see cref="Option{T}" /> into a <see cref="Result{T, TError}" />, mapping
+    ///     <see cref="Some{T}" /> to <see cref="Result.Ok{T}" /> and <see cref="None" /> to
+    ///     <see cref="Result.Error{TError}" /> computed from <paramref name="err" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;string&gt; x = Option.Some("foo");
+    ///     Assert.Equal(Result.Ok("foo"), x.OkOrElse(() =&gt; 0));
+    ///
+    ///     x = Option.None();
+    ///     Assert.Equal(Result.Error(0), x.OkOrElse(() =&gt; 0));
+    ///     </code>
+    /// </example>
+    /// <param name="err">The function that computes the error value in case of <see cref="None" />.</param>
+    /// <typeparam name="TError">Type of the error value.</typeparam>
+    /// <returns>
+    ///     <see cref="Result{T, TError}" /> containing the value if <see cref="Some{T}" />,
+    ///     otherwise the error produced by <paramref name="err" />.
+    /// </returns>
+    public Result<T, TError> OkOrElse<TError>(Func<TError> err)
+        where TError : notnull =>
+#if NET11_0_OR_GREATER
+        HasValue ? new Result.Ok<T>(_value!) : new Result.Error<TError>(err());
+#else
+        this is Some<T>(var value) ? new Result<T, TError>.Ok(value) : new Result<T, TError>.Error(err());
+#endif
+
+    /// <summary>
     ///     Returns the option if it contains a value, otherwise returns <paramref name="option" />.
     /// </summary>
     /// <remarks>
@@ -504,10 +564,10 @@ public abstract record Option<T>
             (_, { HasValue: true }) => other,
             _ => None.Value,
 #else
-                (Some<T>(var s), Some<T>(var o)) => new Some(fn(s, o)),
-                (Some<T>, _) => this,
-                (_, Some<T>) => other,
-                _ => None.Value,
+            (Some<T>(var s), Some<T>(var o)) => new Some(fn(s, o)),
+            (Some<T>, _) => this,
+            (_, Some<T>) => other,
+            _ => None.Value,
 #endif
         };
 
@@ -705,64 +765,13 @@ public abstract record Option<T>
 #endif
         };
 
-    //
-    //     /// <summary>
-    //     ///     Transforms the <see cref="Option{T}" /> into a <see cref="Result{T, TError}" />, mapping
-    //     ///     <see cref="Some{T}" /> to <see cref="Result.Ok{T}" /> and <see cref="None" /> to
-    //     ///     <see cref="Result.Error{TError}" /> with <paramref name="error" />.
-    //     /// </summary>
-    //     /// <remarks>
-    //     ///     Arguments passed to <see cref="OkOr{TError}" /> are eagerly evaluated; if you are passing the result
-    //     ///     of a function call, it is recommended to use <see cref="OkOrElse{TError}" />, which is lazily evaluated.
-    //     /// </remarks>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;string&gt; x = Option.Some("foo");
-    //     ///     Assert.Equal(Result.Ok("foo"), x.OkOr(0));
-    //     ///
-    //     ///     x = Option.None();
-    //     ///     Assert.Equal(Result.Error(0), x.OkOr(0));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="error">The error value returned in case of <see cref="None" />.</param>
-    //     /// <typeparam name="TError">Type of the error value.</typeparam>
-    //     /// <returns>
-    //     ///     <see cref="Result{T, TError}" /> containing the value if <see cref="Some{T}" />,
-    //     ///     otherwise <paramref name="error" />.
-    //     /// </returns>
-    //     public Result<T, TError> OkOr<TError>(TError error)
-    //         where TError : notnull =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? new Result.Ok<T>(_value!) : new Result.Error<TError>(error);
-    // #else
-    //         this is Some<T>(var value) ? new Result<T, TError>.Ok(value) : new Result<T, TError>.Error(error);
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Transforms the <see cref="Option{T}" /> into a <see cref="Result{T, TError}" />, mapping
-    //     ///     <see cref="Some{T}" /> to <see cref="Result.Ok{T}" /> and <see cref="None" /> to
-    //     ///     <see cref="Result.Error{TError}" /> computed from <paramref name="err" />.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;string&gt; x = Option.Some("foo");
-    //     ///     Assert.Equal(Result.Ok("foo"), x.OkOrElse(() =&gt; 0));
-    //     ///
-    //     ///     x = Option.None();
-    //     ///     Assert.Equal(Result.Error(0), x.OkOrElse(() =&gt; 0));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="err">The function that computes the error value in case of <see cref="None" />.</param>
-    //     /// <typeparam name="TError">Type of the error value.</typeparam>
-    //     /// <returns>
-    //     ///     <see cref="Result{T, TError}" /> containing the value if <see cref="Some{T}" />,
-    //     ///     otherwise the error produced by <paramref name="err" />.
-    //     /// </returns>
-    //     public Result<T, TError> OkOrElse<TError>(Func<TError> err)
-    //         where TError : notnull =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? new Result.Ok<T>(_value!) : new Result.Error<TError>(err());
-    // #else
-    //         this is Some<T>(var value) ? new Result<T, TError>.Ok(value) : new Result<T, TError>.Error(err());
-    // #endif
+    /// <summary>
+    ///     Checks whether current option contains value.
+    /// </summary>
+    public static bool operator true(in Option<T> option) => option.IsSome;
+
+    /// <summary>
+    ///     Checks whether current options contains no value.
+    /// </summary>
+    public static bool operator false(Option<T> option) => option.IsNone;
 }
