@@ -39,34 +39,34 @@ public static class OptionSyntax
     }
 #endif
 
-    //     /// <summary>
-    //     ///     Converts from <see cref="Option{T}" /> of <see cref="Option{T}" /> to <see cref="Option{T}" />.
-    //     /// </summary>
-    //     /// <remarks>
-    //     ///     Flattening only removes one level of nesting at a time.
-    //     /// </remarks>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;Option&lt;int&gt;&gt; x = Option.Some(Option.Some(6));
-    //     ///     Assert.Equal(Option.Some(6), x.Flatten());
-    //     ///
-    //     ///     x = Option.Some(Option&lt;int&gt;.None.Value);
-    //     ///     Assert.Equal(Option.None(), x.Flatten());
-    //     ///
-    //     ///     x = Option.None();
-    //     ///     Assert.Equal(Option.None(), x.Flatten());
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="option">The nested option to flatten.</param>
-    //     /// <typeparam name="T">Type of the inner optional value.</typeparam>
-    //     /// <returns>The inner <see cref="Option{T}" /> if <see cref="Option.Some{T}" />, otherwise <see cref="Option.None" />.</returns>
-    //     public static Option<T> Flatten<T>(this Option<Option<T>> option)
-    //         where T : notnull =>
-    // #if NET11_0_OR_GREATER
-    //         option is Option.Some<Option<T>>(var inner) ? inner : Option.None.Value;
-    // #else
-    //         option is Option.Some<Option<T>>(var inner) ? inner : Option<T>.None.Value;
-    // #endif
+    /// <summary>
+    ///     Converts from <see cref="Option{T}" /> of <see cref="Option{T}" /> to <see cref="Option{T}" />.
+    /// </summary>
+    /// <remarks>
+    ///     Flattening only removes one level of nesting at a time.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;Option&lt;int&gt;&gt; x = Option.Some(Option.Some(6));
+    ///     Assert.Equal(Option.Some(6), x.Flatten());
+    ///
+    ///     x = Option.Some(Option&lt;int&gt;.None.Value);
+    ///     Assert.Equal(Option.None(), x.Flatten());
+    ///
+    ///     x = Option.None();
+    ///     Assert.Equal(Option.None(), x.Flatten());
+    ///     </code>
+    /// </example>
+    /// <param name="option">The nested option to flatten.</param>
+    /// <typeparam name="T">Type of the inner optional value.</typeparam>
+    /// <returns>The inner <see cref="Option{T}" /> if <see cref="Option.Some{T}" />, otherwise <see cref="Option.None" />.</returns>
+    public static Option<T> Flatten<T>(this Option<Option<T>> option)
+        where T : notnull =>
+#if NET11_0_OR_GREATER
+        option is Option.Some<Option<T>>(var inner) ? inner : Option.None.Value;
+#else
+            option is Option.Some<Option<T>>(var inner) ? inner : Option<T>.None.Value;
+#endif
 
     /// <summary>
     ///     Unzips an option containing a tuple of two values.

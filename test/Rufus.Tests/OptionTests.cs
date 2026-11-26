@@ -511,18 +511,18 @@ public class OptionTests
         Assert.IsNone(n.Reduce(n, add));
     }
 
-    // [Fact]
-    // public void GivenNestedOption_WhenFlatten_ThenShouldUnnestOneLevel()
-    // {
-    //     Option<Option<int>> someSome = Any.Some<Option<int>>(Any.Some(6));
-    //     Option<Option<int>> someNone = Any.Some<Option<int>>(Any.None());
-    //     Option<Option<int>> none = Any.None();
-    //
-    //     Assert.Equal(6, Assert.IsSome(someSome.Flatten()).Value);
-    //     Assert.IsNone(someNone.Flatten());
-    //     Assert.IsNone(none.Flatten());
-    // }
-    //
+    [Fact]
+    public void GivenNestedOption_WhenFlatten_ThenShouldUnnestOneLevel()
+    {
+        Option<Option<int>> someSome = Any.Some<Option<int>>(Any.Some(6));
+        Option<Option<int>> someNone = Any.Some<Option<int>>(Any.None());
+        Option<Option<int>> none = Any.None();
+
+        Assert.Equal(6, Assert.IsSome(someSome.Flatten()).Value);
+        Assert.IsNone(someNone.Flatten());
+        Assert.IsNone(none.Flatten());
+    }
+
     [Fact]
     public void GivenOptionOfTuple_WhenUnzip_ThenShouldReturnTupleOfOptions()
     {
