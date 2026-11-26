@@ -420,6 +420,61 @@ public abstract record Option<T>
         MapOr(map, default);
 
     /// <summary>
+    ///     Returns the option if it contains a value, otherwise returns <paramref name="option" />.
+    /// </summary>
+    /// <remarks>
+    ///     Arguments passed to <see cref="Or" /> are eagerly evaluated; if you are passing the result of a
+    ///     function call, it is recommended to use <see cref="OrElse" />, which is lazily evaluated.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;int&gt; x = Option.Some(2);
+    ///     Option&lt;int&gt; y = Option.None();
+    ///     Assert.Equal(Option.Some(2), x.Or(y));
+    ///
+    ///     x = Option.None();
+    ///     y = Option.Some(100);
+    ///     Assert.Equal(Option.Some(100), x.Or(y));
+    ///
+    ///     x = Option.Some(2);
+    ///     y = Option.Some(100);
+    ///     Assert.Equal(Option.Some(2), x.Or(y));
+    ///
+    ///     x = Option.None();
+    ///     y = Option.None(),
+    ///     Assert.Equal(Option.None(), x.Or(y));
+    ///     </code>
+    /// </example>
+    /// <param name="option">The fallback option returned when the current option is <see cref="None" />.</param>
+    /// <returns>The current option if <see cref="Some{T}" />, otherwise <paramref name="option" />.</returns>
+    public Option<T> Or(Option<T> option) =>
+#if NET11_0_OR_GREATER
+        HasValue ? this : option;
+#else
+        this is Some<T> ? this : option;
+#endif
+
+    /// <summary>
+    ///     Returns the option if it contains a value, otherwise calls <paramref name="fn" /> and returns the result.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;string&gt; Vikings() =&gt; Option.Some("vikings");
+    ///
+    ///     Assert.Equal(Option.Some("barbarians"), Option.Some("barbarians").OrElse(Vikings));
+    ///     Assert.Equal(Option.Some("vikings"), Option&lt;string&gt;.None.Value.OrElse(Vikings));
+    ///     </code>
+    /// </example>
+    /// <param name="fn">The function that computes a fallback option in case of <see cref="None" />.</param>
+    /// <returns>The current option if <see cref="Some{T}" />, otherwise the result of <paramref name="fn" />.</returns>
+    public Option<T> OrElse(Func<Option<T>> fn) =>
+#if NET11_0_OR_GREATER
+        HasValue ? this : fn();
+#else
+        this is Some<T> ? this : fn();
+#endif
+
+    /// <summary>
     ///     Returns the contained <see cref="Some{T}" /> value.
     /// </summary>
     /// <remarks>
@@ -518,6 +573,36 @@ public abstract record Option<T>
         this is Some(var value) ? value : default;
 #endif
 
+    /// <summary>
+    ///     Returns <see cref="Some{T}" /> if exactly one of <c>this</c> and <paramref name="option" /> is
+    ///     <see cref="Some{T}" />, otherwise returns <see cref="None" />.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Assert.Equal(Option.Some(2), Option.Some(2).Xor(Option.None()));
+    ///     Assert.Equal(Option.Some(2), Option&lt;int&gt;.None.Value.Xor(Option.Some(2)));
+    ///     Assert.Equal(Option.None(), Option.Some(2).Xor(Option.Some(2)));
+    ///     Assert.Equal(Option.None(), Option&lt;int&gt;.None().Xor(Option.None()));
+    ///     </code>
+    /// </example>
+    /// <param name="option">The other option to combine with.</param>
+    /// <returns>
+    ///     The single <see cref="Some{T}" /> option if exactly one is <see cref="Some{T}" />,
+    ///     otherwise <see cref="None" />.
+    /// </returns>
+    public Option<T> Xor(Option<T> option) =>
+        (IsSome, option.IsSome) switch
+        {
+            (true, false) => this,
+            (false, true) => option,
+            _ =>
+#if NET11_0_OR_GREATER
+                    Option.None.Value,
+#else
+                None.Value,
+#endif
+        };
+
     //
     //     /// <summary>
     //     ///     Transforms the <see cref="Option{T}" /> into a <see cref="Result{T, TError}" />, mapping
@@ -609,79 +694,7 @@ public abstract record Option<T>
     //         }
     // #endif
     //     }
-    //
-    //     /// <summary>
-    //     ///     Returns the option if it contains a value, otherwise returns <paramref name="option" />.
-    //     /// </summary>
-    //     /// <remarks>
-    //     ///     Arguments passed to <see cref="Or" /> are eagerly evaluated; if you are passing the result of a
-    //     ///     function call, it is recommended to use <see cref="OrElse" />, which is lazily evaluated.
-    //     /// </remarks>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Assert.Equal(Option.Some(2), Option.Some(2).Or(Option.None()));
-    //     ///     Assert.Equal(Option.Some(100), Option&lt;int&gt;.None.Value.Or(Option.Some(100)));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="option">The fallback option returned when the current option is <see cref="None" />.</param>
-    //     /// <returns>The current option if <see cref="Some{T}" />, otherwise <paramref name="option" />.</returns>
-    //     public Option<T> Or(Option<T> option) =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? this : option;
-    // #else
-    //         this is Some<T> ? this : option;
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Returns the option if it contains a value, otherwise calls <paramref name="fn" /> and returns the result.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;string&gt; Vikings() =&gt; Option.Some("vikings");
-    //     ///
-    //     ///     Assert.Equal(Option.Some("barbarians"), Option.Some("barbarians").OrElse(Vikings));
-    //     ///     Assert.Equal(Option.Some("vikings"), Option&lt;string&gt;.None.Value.OrElse(Vikings));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="fn">The function that computes a fallback option in case of <see cref="None" />.</param>
-    //     /// <returns>The current option if <see cref="Some{T}" />, otherwise the result of <paramref name="fn" />.</returns>
-    //     public Option<T> OrElse(Func<Option<T>> fn) =>
-    // #if NET11_0_OR_GREATER
-    //         HasValue ? this : fn();
-    // #else
-    //         this is Some<T> ? this : fn();
-    // #endif
-    //
-    //     /// <summary>
-    //     ///     Returns <see cref="Some{T}" /> if exactly one of <c>this</c> and <paramref name="option" /> is
-    //     ///     <see cref="Some{T}" />, otherwise returns <see cref="None" />.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Assert.Equal(Option.Some(2), Option.Some(2).Xor(Option.None()));
-    //     ///     Assert.Equal(Option.Some(2), Option&lt;int&gt;.None.Value.Xor(Option.Some(2)));
-    //     ///     Assert.Equal(Option.None(), Option.Some(2).Xor(Option.Some(2)));
-    //     ///     Assert.Equal(Option.None(), Option&lt;int&gt;.None.Value.Xor(Option.None()));
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="option">The other option to combine with.</param>
-    //     /// <returns>
-    //     ///     The single <see cref="Some{T}" /> option if exactly one is <see cref="Some{T}" />,
-    //     ///     otherwise <see cref="None" />.
-    //     /// </returns>
-    //     public Option<T> Xor(Option<T> option) =>
-    //         (IsSome, option.IsSome) switch
-    //         {
-    //             (true, false) => this,
-    //             (false, true) => option,
-    //             _ =>
-    // #if NET11_0_OR_GREATER
-    //                 Option.None.Value,
-    // #else
-    //                 None.Value,
-    // #endif
-    //         };
-    //
+
     //     /// <summary>
     //     ///     Makes a tuple of the value in <c>this</c> and the value in <paramref name="other" />.
     //     /// </summary>

@@ -420,58 +420,58 @@ public class OptionTests
         Assert.Equal(4, Assert.IsSome(even.Filter(isEven)).Value);
     }
 
-    // [Fact]
-    // public void GivenAnyOption_WhenOr_ThenShouldReturnFirstSomeOrSecond()
-    // {
-    //     Option<int> some2 = Any.Some(2);
-    //     Option<int> some100 = Any.Some(100);
-    //     Option<int> none = Any.None();
-    //
-    //     Assert.Equal(some2, some2.Or(none));
-    //     Assert.Equal(some100, none.Or(some100));
-    //     Assert.Equal(some2, some2.Or(some100));
-    //     Assert.IsNone(none.Or(none));
-    // }
-    //
-    // [Fact]
-    // public void GivenAnySome_WhenOrElse_ThenShouldReturnSelfWithoutInvokingFallback()
-    // {
-    //     Option<string> sut = Any.Some("barbarians");
-    //     var fallback = Substitute.For<Func<Option<string>>>();
-    //
-    //     var result = sut.OrElse(fallback);
-    //
-    //     Assert.Equal(sut, result);
-    //     fallback.DidNotReceive().Invoke();
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyNone_WhenOrElse_ThenShouldInvokeFallback()
-    // {
-    //     Option<string> sut = Any.None();
-    //     Option<string> vikings = Any.Some("vikings");
-    //     var fallback = Substitute.For<Func<Option<string>>>();
-    //     fallback.Invoke().Returns(vikings);
-    //
-    //     var result = sut.OrElse(fallback);
-    //
-    //     Assert.Equal(vikings, result);
-    //     fallback.Received(1).Invoke();
-    // }
-    //
-    // [Fact]
-    // public void GivenAnyOptions_WhenXor_ThenShouldReturnSomeOnlyIfExactlyOneIsSome()
-    // {
-    //     Option<int> some2 = Any.Some(2);
-    //     Option<int> some3 = Any.Some(3);
-    //     Option<int> none = Any.None();
-    //
-    //     Assert.Equal(some2, some2.Xor(none));
-    //     Assert.Equal(some2, none.Xor(some2));
-    //     Assert.IsNone(some2.Xor(some3));
-    //     Assert.IsNone(none.Xor(none));
-    // }
-    //
+    [Fact]
+    public void GivenAnyOption_WhenOr_ThenShouldReturnFirstSomeOrSecond()
+    {
+        Option<int> some2 = Any.Some(2);
+        Option<int> some100 = Any.Some(100);
+        Option<int> none = Any.None();
+
+        Assert.Equal(some2, some2.Or(none));
+        Assert.Equal(some100, none.Or(some100));
+        Assert.Equal(some2, some2.Or(some100));
+        Assert.IsNone(none.Or(none));
+    }
+
+    [Fact]
+    public void GivenAnySome_WhenOrElse_ThenShouldReturnSelfWithoutInvokingFallback()
+    {
+        Option<string> sut = Any.Some("barbarians");
+        var fallback = Substitute.For<Func<Option<string>>>();
+
+        var result = sut.OrElse(fallback);
+
+        Assert.Equal(sut, result);
+        fallback.DidNotReceive().Invoke();
+    }
+
+    [Fact]
+    public void GivenAnyNone_WhenOrElse_ThenShouldInvokeFallback()
+    {
+        Option<string> sut = Any.None();
+        Option<string> vikings = Any.Some("vikings");
+        var fallback = Substitute.For<Func<Option<string>>>();
+        fallback.Invoke().Returns(vikings);
+
+        var result = sut.OrElse(fallback);
+
+        Assert.Equal(vikings, result);
+        fallback.Received(1).Invoke();
+    }
+
+    [Fact]
+    public void GivenAnyOptions_WhenXor_ThenShouldReturnSomeOnlyIfExactlyOneIsSome()
+    {
+        Option<int> some2 = Any.Some(2);
+        Option<int> some3 = Any.Some(3);
+        Option<int> none = Any.None();
+
+        Assert.Equal(some2, some2.Xor(none));
+        Assert.Equal(some2, none.Xor(some2));
+        Assert.IsNone(some2.Xor(some3));
+        Assert.IsNone(none.Xor(none));
+    }
+
     // [Fact]
     // public void GivenAnyOptions_WhenZip_ThenShouldReturnTupleOnlyWhenBothAreSome()
     // {
