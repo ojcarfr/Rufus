@@ -144,8 +144,8 @@ public static class OptionSyntax
     ///     <code>
     ///     Option&lt;IEnumerable&lt;int&gt;&gt; o1 = Option.Some&lt;IEnumerable&lt;int&gt;&gt;([1, 2]);
     ///     Option&lt;IEnumerable&lt;int&gt;&gt; o2 = Option.None();
-    ///     Assert.Equal([1, 2], o1.IntoFlatIter());
-    ///     Assert.Empty(o2.IntoFlatIter());
+    ///     Assert.Equal([1, 2], o1.AsFlattenEnumerable());
+    ///     Assert.Empty(o2.AsFlattenEnumerable());
     ///     </code>
     /// </example>
     /// <param name="option">The optional sequence to flatten.</param>
@@ -154,7 +154,7 @@ public static class OptionSyntax
     ///     An <see cref="IEnumerable{T}" /> containing the elements of the inner sequence, or empty if
     ///     <see cref="Option.None" />.
     /// </returns>
-    public static IEnumerable<T> AsEnumerable<T>(this Option<IEnumerable<T>> option)
+    public static IEnumerable<T> AsFlattenEnumerable<T>(this Option<IEnumerable<T>> option)
     {
         if (option is not Option.Some<IEnumerable<T>>(var inner))
         {
@@ -176,8 +176,8 @@ public static class OptionSyntax
     ///     <code>
     ///     Option&lt;IEnumerable&lt;int&gt;&gt; o1 = Option.Some&lt;IEnumerable&lt;int&gt;&gt;([1, 2]);
     ///     Option&lt;IEnumerable&lt;int&gt;&gt; o2 = Option.None();
-    ///     Assert.Equal([1, 2], o1.IntoFlatIter());
-    ///     Assert.Empty(o2.IntoFlatIter());
+    ///     Assert.Equal([1, 2], o1.AsFlattenAsyncEnumerable());
+    ///     Assert.Empty(o2.AsFlattenAsyncEnumerable());
     ///     </code>
     /// </example>
     /// <param name="option">The optional sequence to flatten.</param>
@@ -186,7 +186,7 @@ public static class OptionSyntax
     ///     An <see cref="IEnumerable{T}" /> containing the elements of the inner sequence, or empty if
     ///     <see cref="Option.None" />.
     /// </returns>
-    public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this Option<IAsyncEnumerable<T>> option)
+    public static async IAsyncEnumerable<T> AsFlattenAsyncEnumerable<T>(this Option<IAsyncEnumerable<T>> option)
     {
         if (option is not Option.Some<IAsyncEnumerable<T>>(var inner))
         {

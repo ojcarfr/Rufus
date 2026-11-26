@@ -551,23 +551,23 @@ public class OptionTests
     }
 
     [Fact]
-    public void GivenOptionOfEnumerable_WhenAsEnumerable_ThenShouldYieldElementsOrEmpty()
+    public void GivenOptionOfEnumerable_WhenAsFlattenEnumerable_ThenShouldYieldElementsOrEmpty()
     {
         Option<IEnumerable<int>> someSeq = Any.Some<IEnumerable<int>>([1, 2]);
         Option<IEnumerable<int>> noneSeq = Any.None();
 
-        Assert.Equal([1, 2], someSeq.AsEnumerable());
-        Assert.Empty(noneSeq.AsEnumerable());
+        Assert.Equal([1, 2], someSeq.AsFlattenEnumerable());
+        Assert.Empty(noneSeq.AsFlattenEnumerable());
     }
 
     [Fact]
-    public void GivenOptionOfAsyncEnumerable_WhenAsAsyncEnumerable_ThenShouldYieldElementsOrEmpty()
+    public void GivenOptionOfAsyncEnumerable_WhenAsFlattenAsyncEnumerable_ThenShouldYieldElementsOrEmpty()
     {
         Option<IAsyncEnumerable<int>> someSeq = Any.Some(AsyncEnumerable.Range(1, 2));
         Option<IAsyncEnumerable<int>> noneSeq = Any.None();
 
-        Assert.Equal([1, 2], someSeq.AsAsyncEnumerable());
+        Assert.Equal([1, 2], someSeq.AsFlattenAsyncEnumerable());
 
-        Assert.Empty(noneSeq.AsAsyncEnumerable());
+        Assert.Empty(noneSeq.AsFlattenAsyncEnumerable());
     }
 }
