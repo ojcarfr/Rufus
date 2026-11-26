@@ -538,25 +538,36 @@ public class OptionTests
         Assert.IsNone(d);
     }
 
-    // [Fact]
-    // public void GivenOptionOfResult_WhenTranspose_ThenShouldReturnResultOfOption()
-    // {
-    //     Option<Result<int, string>> someOk = Any.Some<Result<int, string>>(Any.Ok(5));
-    //     Option<Result<int, string>> someErr = Any.Some<Result<int, string>>(Any.Error("err"));
-    //     Option<Result<int, string>> none = Any.None();
-    //
-    //     Assert.Equal<Result<Option<int>, string>>(Any.Ok<Option<int>>(Any.Some(5)), someOk.Transpose());
-    //     Assert.Equal<Result<Option<int>, string>>(Any.Error("err"), someErr.Transpose());
-    //     Assert.Equal<Result<Option<int>, string>>(Any.Ok<Option<int>>(Any.None()), none.Transpose());
-    // }
-    //
-    // [Fact]
-    // public void GivenOptionOfEnumerable_WhenIntoFlatIter_ThenShouldYieldElementsOrEmpty()
-    // {
-    //     Option<IEnumerable<int>> someSeq = Any.Some<IEnumerable<int>>([1, 2]);
-    //     Option<IEnumerable<int>> noneSeq = Any.None();
-    //
-    //     Assert.Equal([1, 2], someSeq.IntoFlatIter());
-    //     Assert.Empty(noneSeq.IntoFlatIter());
-    // }
+    [Fact]
+    public void GivenOptionOfResult_WhenTranspose_ThenShouldReturnResultOfOption()
+    {
+        Option<Result<int, string>> someOk = Any.Some<Result<int, string>>(Any.Ok(5));
+        Option<Result<int, string>> someErr = Any.Some<Result<int, string>>(Any.Error("err"));
+        Option<Result<int, string>> none = Any.None();
+
+        Assert.Equal<Result<Option<int>, string>>(Any.Ok<Option<int>>(Any.Some(5)), someOk.Transpose());
+        Assert.Equal<Result<Option<int>, string>>(Any.Error("err"), someErr.Transpose());
+        Assert.Equal<Result<Option<int>, string>>(Any.Ok<Option<int>>(Any.None()), none.Transpose());
+    }
+
+    [Fact]
+    public void GivenOptionOfEnumerable_WhenAsEnumerable_ThenShouldYieldElementsOrEmpty()
+    {
+        Option<IEnumerable<int>> someSeq = Any.Some<IEnumerable<int>>([1, 2]);
+        Option<IEnumerable<int>> noneSeq = Any.None();
+
+        Assert.Equal([1, 2], someSeq.AsEnumerable());
+        Assert.Empty(noneSeq.AsEnumerable());
+    }
+
+    [Fact]
+    public void GivenOptionOfAsyncEnumerable_WhenAsAsyncEnumerable_ThenShouldYieldElementsOrEmpty()
+    {
+        Option<IAsyncEnumerable<int>> someSeq = Any.Some(AsyncEnumerable.Range(1, 2));
+        Option<IAsyncEnumerable<int>> noneSeq = Any.None();
+
+        Assert.Equal([1, 2], someSeq.AsAsyncEnumerable());
+
+        Assert.Empty(noneSeq.AsAsyncEnumerable());
+    }
 }

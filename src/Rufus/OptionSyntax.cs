@@ -100,65 +100,102 @@ public static class OptionSyntax
                 : (Option<T1>.None.Value, Option<T2>.None.Value);
 #endif
 
-    //     /// <summary>
-    //     ///     Transposes an <see cref="Option{T}" /> of a <see cref="Result{T, TError}" /> into a
-    //     ///     <see cref="Result{T, TError}" /> of an <see cref="Option{T}" />.
-    //     /// </summary>
-    //     /// <remarks>
-    //     ///     <c>Some(Ok(v))</c> is mapped to <c>Ok(Some(v))</c>, <c>Some(Error(e))</c> is mapped to <c>Error(e)</c>,
-    //     ///     and <c>None</c> is mapped to <c>Ok(None)</c>.
-    //     /// </remarks>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;Result&lt;int, string&gt;&gt; x = Option.Some&lt;Result&lt;int, string&gt;&gt;(Result.Ok(5));
-    //     ///     Result&lt;Option&lt;int&gt;, string&gt; y = Result.Ok&lt;Option&lt;int&gt;&gt;(Option.Some(5));
-    //     ///     Assert.Equal(y, x.Transpose());
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="option">The option containing a result.</param>
-    //     /// <typeparam name="T">Type of the success value.</typeparam>
-    //     /// <typeparam name="TError">Type of the error value.</typeparam>
-    //     /// <returns>The transposed <see cref="Result{T, TError}" /> of <see cref="Option{T}" />.</returns>
-    //     public static Result<Option<T>, TError> Transpose<T, TError>(this Option<Result<T, TError>> option)
-    //         where T : notnull
-    //         where TError : notnull =>
-    //         option switch
-    //         {
-    // #if NET11_0_OR_GREATER
-    //             Option.Some<Result<T, TError>>(Result.Ok<T>(var ok)) => new Result.Ok<Option<T>>(new Option.Some<T>(ok)),
-    //             Option.Some<Result<T, TError>>(Result.Error<TError>(var error)) => new Result.Error<TError>(error),
-    //             _ => new Result.Ok<Option<T>>(Option.None.Value),
-    // #else
-    //             Option.Some<Result<T, TError>>(Result.Ok<T>(var ok)) => new Result<Option<T>, TError>.Ok(new Option<T>.Some(ok)),
-    //             Option.Some<Result<T, TError>>(Result.Error<TError>(var error)) => new Result<Option<T>, TError>.Error(error),
-    //             _ => new Result<Option<T>, TError>.Ok(Option<T>.None.Value),
-    // #endif
-    //         };
-    //
-    //     /// <summary>
-    //     ///     Transforms an optional sequence into an <see cref="IEnumerable{T}" />.
-    //     ///     If <paramref name="option" /> is <see cref="Option.None" />, the resulting sequence is empty;
-    //     ///     otherwise, the elements of the contained sequence are yielded.
-    //     /// </summary>
-    //     /// <example>
-    //     ///     <code>
-    //     ///     Option&lt;IEnumerable&lt;int&gt;&gt; o1 = Option.Some&lt;IEnumerable&lt;int&gt;&gt;([1, 2]);
-    //     ///     Option&lt;IEnumerable&lt;int&gt;&gt; o2 = Option.None();
-    //     ///     Assert.Equal([1, 2], o1.IntoFlatIter());
-    //     ///     Assert.Empty(o2.IntoFlatIter());
-    //     ///     </code>
-    //     /// </example>
-    //     /// <param name="option">The optional sequence to flatten.</param>
-    //     /// <typeparam name="T">Type of the sequence elements.</typeparam>
-    //     /// <returns>An <see cref="IEnumerable{T}" /> containing the elements of the inner sequence, or empty if <see cref="Option.None" />.</returns>
-    //     public static IEnumerable<T> IntoFlatIter<T>(this Option<IEnumerable<T>> option)
-    //     {
-    //         if (option is Option.Some<IEnumerable<T>>(var inner))
-    //         {
-    //             foreach (var item in inner)
-    //             {
-    //                 yield return item;
-    //             }
-    //         }
-    //     }
+    /// <summary>
+    ///     Transposes an <see cref="Option{T}" /> of a <see cref="Result{T, TError}" /> into a
+    ///     <see cref="Result{T, TError}" /> of an <see cref="Option{T}" />.
+    /// </summary>
+    /// <remarks>
+    ///     <c>Some(Ok(v))</c> is mapped to <c>Ok(Some(v))</c>, <c>Some(Error(e))</c> is mapped to <c>Error(e)</c>,
+    ///     and <c>None</c> is mapped to <c>Ok(None)</c>.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;Result&lt;int, string&gt;&gt; x = Option.Some&lt;Result&lt;int, string&gt;&gt;(Result.Ok(5));
+    ///     Result&lt;Option&lt;int&gt;, string&gt; y = Result.Ok&lt;Option&lt;int&gt;&gt;(Option.Some(5));
+    ///     Assert.Equal(y, x.Transpose());
+    ///     </code>
+    /// </example>
+    /// <param name="option">The option containing a result.</param>
+    /// <typeparam name="T">Type of the success value.</typeparam>
+    /// <typeparam name="TError">Type of the error value.</typeparam>
+    /// <returns>The transposed <see cref="Result{T, TError}" /> of <see cref="Option{T}" />.</returns>
+    public static Result<Option<T>, TError> Transpose<T, TError>(this Option<Result<T, TError>> option)
+        where T : notnull
+        where TError : notnull =>
+        option switch
+        {
+#if NET11_0_OR_GREATER
+            Option.Some<Result<T, TError>>(Result.Ok<T>(var ok)) => new Result.Ok<Option<T>>(new Option.Some<T>(ok)),
+            Option.Some<Result<T, TError>>(Result.Error<TError>(var error)) => new Result.Error<TError>(error),
+            _ => new Result.Ok<Option<T>>(Option.None.Value),
+#else
+                Option.Some<Result<T, TError>>(Result.Ok<T>(var ok)) => new Result<Option<T>, TError>.Ok(new Option<T>.Some(ok)),
+                Option.Some<Result<T, TError>>(Result.Error<TError>(var error)) => new Result<Option<T>, TError>.Error(error),
+                _ => new Result<Option<T>, TError>.Ok(Option<T>.None.Value),
+#endif
+        };
+
+    /// <summary>
+    ///     Transforms an optional sequence into an <see cref="IEnumerable{T}" />.
+    ///     If <paramref name="option" /> is <see cref="Option.None" />, the resulting sequence is empty;
+    ///     otherwise, the elements of the contained sequence are yielded.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;IEnumerable&lt;int&gt;&gt; o1 = Option.Some&lt;IEnumerable&lt;int&gt;&gt;([1, 2]);
+    ///     Option&lt;IEnumerable&lt;int&gt;&gt; o2 = Option.None();
+    ///     Assert.Equal([1, 2], o1.IntoFlatIter());
+    ///     Assert.Empty(o2.IntoFlatIter());
+    ///     </code>
+    /// </example>
+    /// <param name="option">The optional sequence to flatten.</param>
+    /// <typeparam name="T">Type of the sequence elements.</typeparam>
+    /// <returns>
+    ///     An <see cref="IEnumerable{T}" /> containing the elements of the inner sequence, or empty if
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static IEnumerable<T> AsEnumerable<T>(this Option<IEnumerable<T>> option)
+    {
+        if (option is not Option.Some<IEnumerable<T>>(var inner))
+        {
+            yield break;
+        }
+
+        foreach (T item in inner)
+        {
+            yield return item;
+        }
+    }
+
+    /// <summary>
+    ///     Transforms an optional sequence into an <see cref="IAsyncEnumerable{T}" />.
+    ///     If <paramref name="option" /> is <see cref="Option.None" />, the resulting sequence is empty;
+    ///     otherwise, the elements of the contained sequence are yielded.
+    /// </summary>
+    /// <example>
+    ///     <code>
+    ///     Option&lt;IEnumerable&lt;int&gt;&gt; o1 = Option.Some&lt;IEnumerable&lt;int&gt;&gt;([1, 2]);
+    ///     Option&lt;IEnumerable&lt;int&gt;&gt; o2 = Option.None();
+    ///     Assert.Equal([1, 2], o1.IntoFlatIter());
+    ///     Assert.Empty(o2.IntoFlatIter());
+    ///     </code>
+    /// </example>
+    /// <param name="option">The optional sequence to flatten.</param>
+    /// <typeparam name="T">Type of the sequence elements.</typeparam>
+    /// <returns>
+    ///     An <see cref="IEnumerable{T}" /> containing the elements of the inner sequence, or empty if
+    ///     <see cref="Option.None" />.
+    /// </returns>
+    public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this Option<IAsyncEnumerable<T>> option)
+    {
+        if (option is not Option.Some<IAsyncEnumerable<T>>(var inner))
+        {
+            yield break;
+        }
+
+        await foreach (T item in inner)
+        {
+            yield return item;
+        }
+    }
 }
